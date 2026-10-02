@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import EmptyState from '../components/EmptyState.astro';
+import SectionLabel from '../components/SectionLabel.astro';
+import { site, members } from '../content/site';
+---
+<Base title="Pengurus OSIS">
+  <div class="container page-content">
+    <a class="text-link back-link" href="/">← Beranda</a>
+    <section class="page-heading" data-section="01" aria-labelledby="members-title"><div data-motion="hero"><SectionLabel number="01" label={`Periode ${site.term}`} /></div><h1 id="members-title" data-motion="hero" data-delay="90">Kenali pengurus.</h1><p data-motion="hero" data-delay="180">Siswa yang bekerja bersama untuk menjalankan kegiatan dan mewakili suara teman-teman di Dipo.</p></section>
+    <section class="page-section" data-section="02" aria-labelledby="roster-title">
+      <header class="page-section-heading" data-motion="reveal"><SectionLabel number="02" label="Kepengurusan" /><h2 id="roster-title">Orang-orang di balik OSIS.</h2></header>
+      <div data-motion="reveal" data-delay="100">{members.length > 0 ? <div class="member-grid">{members.map(member => <article class="member-card fucknutcard">{member.photo && <img src={member.photo} alt={member.name} width="480" height="600" loading="lazy" />}<p>{member.department}</p><h3>{member.name}</h3><p>{member.role}</p></article>)}</div> : <EmptyState title="Susunan pengurus segera diumumkan" description="Daftar anggota OSIS periode 2026/2027 akan ditampilkan setelah dikonfirmasi oleh sekolah." />}</div>
+    </section>
+    <section class="page-section member-contact" data-section="03" data-motion="reveal" aria-labelledby="member-contact-title"><div><SectionLabel number="03" label="Tetap terhubung" /><h2 id="member-contact-title">Punya masukan untuk kami?</h2></div><a class="button" href="/aspirasi">Ruang aspirasi <span aria-hidden="true">↗</span></a></section>
+  </div>
+</Base>

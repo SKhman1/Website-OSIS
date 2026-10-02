@@ -1,0 +1,14 @@
+node_modules/
+.npm-cache/
+dist/
+dist-pages/
+.wrangler/
+.dev.vars
+.dev.vars.*
+.astro/
+.env
+.env.*
+!.env.example
+data/*.db*
+*.log
+.DS_Store

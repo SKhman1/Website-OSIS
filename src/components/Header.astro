@@ -1,0 +1,23 @@
+---
+import Brand from './Brand.astro';
+import { navigation } from '../content/site';
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+<header class="site-header boobnavbar">
+  <div class="container header-inner">
+    <Brand />
+    <nav class="desktop-nav" aria-label="Navigasi utama">
+      {navigation.map(({ href, label }) => (
+        <a href={href} aria-current={href === path ? 'page' : undefined}>{label}</a>
+      ))}
+    </nav>
+    <a class="button button-small header-aspirasi" href="/aspirasi" aria-current={path === '/aspirasi' ? 'page' : undefined}>Ruang aspirasi <span aria-hidden="true">↗</span></a>
+    <details class="mobile-menu">
+      <summary>Menu <span aria-hidden="true">+</span></summary>
+      <nav aria-label="Navigasi seluler">
+        {navigation.map(({ href, label }) => <a href={href}>{label}</a>)}
+        <a href="/aspirasi">Ruang aspirasi</a>
+      </nav>
+    </details>
+  </div>
+</header>

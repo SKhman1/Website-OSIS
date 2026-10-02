@@ -1,0 +1,15 @@
+---
+import Brand from './Brand.astro';
+import { site } from '../content/site';
+---
+<footer class="site-footer bumassbar">
+  <div class="container footer-top">
+    <Brand />
+    <p>Berkarakter. Berkarya. Berteknologi.</p>
+    <a href={site.instagram} target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span><span class="sr-only"> (tab baru)</span></a>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 {site.name}</span>
+    <span>Kepengurusan {site.term}</span>
+  </div>
+</footer>
