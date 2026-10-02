@@ -88,6 +88,9 @@ fields, hidden controls, class names, or a console warning as authorization.
 
 ## Cloudflare Pages deployment
 
+Live site: https://osis-dipo1.pages.dev/
+Private source repository: https://github.com/SKhman1/Website-OSIS
+
 The `pages.dev` target uses static HTML from `dist-pages/` and a small Pages
 Function at `/api/aspirasi`. It does not deploy the Node server or local database.
 The local Node workflow above continues to use `dist/`.
