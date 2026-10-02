@@ -1,5 +1,6 @@
 import type { ImageMetadata } from 'astro';
 import purbayaPhoto from '../assets/placeholders/purbaya.png';
+import advisorPhoto from '../assets/placeholders/purbaya-advisor.png';
 
 export const site = {
   name: 'OSIS Dipo 1',
@@ -27,6 +28,38 @@ export interface Member {
 
 // Publish only the approved 2026/2027 roster. Do not invent student identities.
 export const members: Member[] = [];
+
+export interface LeadershipMember {
+  id: string;
+  role: string;
+  name: string | null;
+  photo: ImageMetadata;
+  photoAlt: string;
+  photoIsPlaceholder: boolean;
+}
+
+// The supplied Purbaya images demonstrate the layout, not real school staff.
+export const advisors: LeadershipMember[] = [{
+  id: 'pembina-osis',
+  role: 'Pembina OSIS',
+  name: null,
+  photo: advisorPhoto,
+  photoAlt: 'Purbaya sebagai gambar contoh untuk kartu pembina OSIS',
+  photoIsPlaceholder: true,
+}];
+
+export const coreLeadership: LeadershipMember[] = [
+  { id: 'ketua', role: 'Ketua' },
+  { id: 'wakil-ketua', role: 'Wakil Ketua' },
+  { id: 'sekretaris', role: 'Sekretaris' },
+  { id: 'bendahara', role: 'Bendahara' },
+].map(person => ({
+  ...person,
+  name: null,
+  photo: purbayaPhoto,
+  photoAlt: `Purbaya sebagai gambar contoh untuk peran ${person.role}`,
+  photoIsPlaceholder: true,
+}));
 
 export interface Department {
   id: string;

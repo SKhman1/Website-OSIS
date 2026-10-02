@@ -27,7 +27,7 @@ small vertical reveals, staggered hero entry, responsive hover/press feedback,
 and a brief ambient orbit entrance. No continuous loops or animation libraries.
 
 Homepage sequence: 01 hero, 02 statistics, 03 about, 04 vision/mission,
-05 departments, 06 programs, 07 activities, 08 aspirations. Other public pages have numbered,
+05 leadership and departments, 06 programs, 07 activities, 08 aspirations. Other public pages have numbered,
 labelled semantic sections with their own heading relationships.
 
 Statistics contain explicitly labelled preview values until verified data is set
@@ -44,7 +44,7 @@ navigation. No SPA router, scroll interception, or React dependency is needed.
 
 Ten photo cards live at `/sekbid` in a balanced two-column desktop gallery and
 one column on mobile. Numbered anchor links jump directly to any team. The
-homepage previews three cards with links to their anchors in the full directory.
+homepage previews four cards with links to their anchors in the full directory.
 No autoplay carousel, gesture-only navigation, or additional JS is needed.
 
 Cards reuse the orange tokens, Manrope, spacing scale, and motion timings.
@@ -53,6 +53,17 @@ alt text. All ten currently use the supplied Purbaya cutout as a labelled exampl
 Names and descriptions remain stubs; no student faces or roles are invented.
 Interactive preview cards have keyboard focus, hover/press feedback, and reduced
 motion support. The directory's information cards do not pretend to be buttons.
+
+## Leadership hierarchy
+
+Homepage section 05 stacks a teacher-advisor area, four student leadership roles,
+and four department previews. `/anggota` follows the same hierarchy. Ketua,
+Wakil Ketua, Sekretaris, and Bendahara each have a separate card. Student/staff
+names remain unset until supplied; the Purbaya photographs are explicit examples.
+The advisor uses the newly supplied sitting photograph. Four-column desktop
+rows wrap into two on tablets and one on small phones. All card headings follow
+the surrounding section hierarchy and reuse the same image, spacing, and motion
+tokens. The ten-card `/sekbid` directory remains complete.
 
 ## Developer joke
 

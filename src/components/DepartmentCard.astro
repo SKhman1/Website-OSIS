@@ -1,9 +1,10 @@
 ---
 import type { Department } from '../content/site';
 import { Image } from 'astro:assets';
-interface Props { department: Department; preview?: boolean; delay?: number; }
-const { department, preview = false, delay = 0 } = Astro.props;
+interface Props { department: Department; preview?: boolean; delay?: number; headingLevel?: 'h3' | 'h4'; }
+const { department, preview = false, delay = 0, headingLevel = 'h3' } = Astro.props;
 const Tag = preview ? 'a' : 'article';
+const Heading = headingLevel;
 ---
 <Tag
   class:list={['department-card', 'fucknutcard', { 'department-preview-card': preview }]}
@@ -32,7 +33,7 @@ const Tag = preview ? 'a' : 'article';
     <span class="department-number-badge" aria-hidden="true">{department.number}</span>
   </div>
   <div class="department-card-body">
-    <h3 id={`${preview ? 'preview-' : ''}${department.id}-title`}>{department.name}</h3>
+    <Heading id={`${preview ? 'preview-' : ''}${department.id}-title`}>{department.name}</Heading>
     <p>{department.description}</p>
     {preview && <span class="department-card-link">Lihat bidang <span aria-hidden="true">↗</span></span>}
   </div>

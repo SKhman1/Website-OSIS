@@ -141,12 +141,20 @@ as a placeholder. Imported images can also be stored in `src/assets/` for
 Astro optimization. Set `photoIsPlaceholder: false` when supplying real team
 photos, and provide a matching `photoAlt` description.
 
-The full grid lives at `/sekbid`. Three preview cards on the homepage link to
-the first three teams via URL anchors; all ten remain available in the gallery.
+The full grid lives at `/sekbid`. Four preview cards on the homepage link to
+the first four teams via URL anchors; all ten remain available in the gallery.
 No carousel dependency or social-media embed is loaded. Research limitations
 and public sources are documented in `SOCIAL-RESEARCH.md`.
 
 Future aspirations/WhatsApp work is recorded in `ROADMAP.md`; it remains deferred.
+
+## Leadership content
+
+`src/content/site.ts` exports `advisors` and `coreLeadership`. Both the homepage
+and `/anggota` stack teacher advisors above Ketua, Wakil Ketua, Sekretaris, and
+Bendahara, followed by four department previews and a link to the full directory.
+Fill each leadership entry's `name` with approved content and replace its photo
+and alt text; set `photoIsPlaceholder` to false for real portraits.
 
 ## Developer Easter egg
 
