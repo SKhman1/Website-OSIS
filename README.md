@@ -37,9 +37,14 @@ server. Do not use `astro preview` as a production server.
 - `src/server/routes/aspirasi.ts`: local Node API route injected by the Astro config.
 - `functions/api/aspirasi.ts`: Cloudflare Pages API using the shared response handler.
 
-No roster or policy content was provided, so these sections show honest empty
-states. The temporary typographic logo and orange token need official assets.
-Nixxie has no artwork yet. The console warning references its name only.
+The supplied presentation provides the vision on slide 2 and the single mission
+on slide 3; these are reproduced in `src/content/site.ts`. The roster, official
+department names, and descriptions still show explicit empty states/stubs.
+The supplied OSIS and 2026/2027 cabinet logos appear together in the navbar and
+footer. `src/assets/` preserves the original PNG files; Astro emits optimized
+WebP images for the public build. CSS frames the cabinet logo's transparent
+margin without changing its artwork. The primary orange is now `#ff9f43`;
+small orange text retains a darker shade for readable contrast.
 
 The homepage now has eight numbered sections with section 02 reserved for
 statistics. Demo numbers are visibly marked as examples. Set a statistic's
@@ -131,10 +136,17 @@ asset URL such as `/images/sekbid/sekbid-01.webp` and `photoAlt` to a meaningful
 description. Store approved photos in `public/images/sekbid/`. Prefer optimized
 WebP/AVIF assets and an 8:5 composition for the gallery.
 
+All ten cards currently use the user-supplied Purbaya example photo, labelled
+as a placeholder. Imported images can also be stored in `src/assets/` for
+Astro optimization. Set `photoIsPlaceholder: false` when supplying real team
+photos, and provide a matching `photoAlt` description.
+
 The full grid lives at `/sekbid`. Three preview cards on the homepage link to
 the first three teams via URL anchors; all ten remain available in the gallery.
 No carousel dependency or social-media embed is loaded. Research limitations
 and public sources are documented in `SOCIAL-RESEARCH.md`.
+
+Future aspirations/WhatsApp work is recorded in `ROADMAP.md`; it remains deferred.
 
 ## Developer Easter egg
 

@@ -1,7 +1,14 @@
 ---
 import { site } from '../content/site';
+import { Image } from 'astro:assets';
+import osisLogo from '../assets/logos/osis.png';
+import cabinetLogo from '../assets/logos/cabinet-2026-2027.png';
 ---
 <a class="brand" href="/" aria-label={`${site.name} — beranda`}>
-  <span class="brand-mark" aria-hidden="true">d<span>.</span></span>
+  <span class="brand-logos">
+    <Image class="brand-osis-logo" src={osisLogo} alt="Logo OSIS" width={96} format="webp" quality={90} loading="eager" />
+    <span class="brand-logo-divider" aria-hidden="true"></span>
+    <span class="brand-cabinet-frame"><Image src={cabinetLogo} alt="Logo OSIS SMK Diponegoro 1 Jakarta periode 2026/2027" width={280} format="webp" quality={90} loading="eager" /></span>
+  </span>
   <span class="brand-name">{site.name}<small>{site.school}</small></span>
 </a>

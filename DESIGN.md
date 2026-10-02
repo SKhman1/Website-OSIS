@@ -7,14 +7,16 @@ find the approved 2026/2027 roster, follow activities, and eventually send an as
 ## Shared system
 
 - One locally served variable font: Manrope, with weights defining hierarchy.
-- Orange `#c64e16` is a provisional brand token, pending the official logo/colors.
+- Brighter orange `#ff9f43` is the primary token, inspired by the supplied logo.
+- Orange text uses `#a84508` on light backgrounds; bright orange buttons use dark text.
 - White canvas, green-neutral text/surfaces, pale orange identity panel.
 - All colors, spacing, widths, and radii are centralized in `src/styles/global.css`.
 - A 4px-based spacing scale; constrained reading widths; content-led layouts.
 - No framework runtime in the browser. CSS and a small TypeScript motion module.
 - Native mobile navigation with `details`; visible keyboard focus; reduced motion.
-- The typographic `d.` mark is temporary, not the official school logo.
-- Nixxie artwork and approved photography will be added when supplied.
+- The navbar and footer pair the supplied OSIS and 2026/2027 cabinet logos.
+- Original artwork remains unchanged; CSS frames the cabinet logo's transparent margin.
+- Purbaya is a user-requested temporary photo, explicitly labelled as an example.
 - Do not invent student names, school policies, dates, or activity statistics.
 
 ## Motion and sections
@@ -47,7 +49,7 @@ No autoplay carousel, gesture-only navigation, or additional JS is needed.
 
 Cards reuse the orange tokens, Manrope, spacing scale, and motion timings.
 Real photos use an 8:5 crop, reserved dimensions, lazy loading, and descriptive
-alt text. Until supplied, an explicit typographic photo placeholder is shown.
+alt text. All ten currently use the supplied Purbaya cutout as a labelled example.
 Names and descriptions remain stubs; no student faces or roles are invented.
 Interactive preview cards have keyboard focus, hover/press feedback, and reduced
 motion support. The directory's information cards do not pretend to be buttons.

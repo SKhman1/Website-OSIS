@@ -1,5 +1,6 @@
 ---
 import type { Department } from '../content/site';
+import { Image } from 'astro:assets';
 interface Props { department: Department; preview?: boolean; delay?: number; }
 const { department, preview = false, delay = 0 } = Astro.props;
 const Tag = preview ? 'a' : 'article';
@@ -13,9 +14,13 @@ const Tag = preview ? 'a' : 'article';
   data-delay={delay}
   data-department={department.id}
 >
-  <div class="department-photo">
+  <div class:list={['department-photo', { 'department-photo-example': department.photoIsPlaceholder }]}>
     {department.photo ? (
-      <img src={department.photo} alt={department.photoAlt ?? `Tim ${department.name}`} width="960" height="600" loading="lazy" decoding="async" />
+      typeof department.photo === 'string' ? (
+        <img src={department.photo} alt={department.photoAlt ?? `Tim ${department.name}`} width="960" height="600" loading="lazy" decoding="async" />
+      ) : (
+        <Image src={department.photo} alt={department.photoAlt ?? `Tim ${department.name}`} width={department.photoIsPlaceholder ? 666 : 960} height={department.photoIsPlaceholder ? 375 : 600} format="webp" quality={85} loading="lazy" decoding="async" />
+      )
     ) : (
       <div class="department-photo-placeholder">
         <span class="department-photo-label">OSIS DIPO 1 <span aria-hidden="true">/</span> SEKSI BIDANG</span>
@@ -23,6 +28,7 @@ const Tag = preview ? 'a' : 'article';
         <span class="department-photo-caption"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z" /><circle cx="12" cy="13" r="4" /></svg>Foto tim segera hadir</span>
       </div>
     )}
+    {department.photoIsPlaceholder && <span class="department-example-label">Foto contoh · Purbaya</span>}
     <span class="department-number-badge" aria-hidden="true">{department.number}</span>
   </div>
   <div class="department-card-body">

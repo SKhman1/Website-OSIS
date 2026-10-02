@@ -1,3 +1,6 @@
+import type { ImageMetadata } from 'astro';
+import purbayaPhoto from '../assets/placeholders/purbaya.png';
+
 export const site = {
   name: 'OSIS Dipo 1',
   school: 'SMK Diponegoro 1 Jakarta',
@@ -30,8 +33,9 @@ export interface Department {
   number: string;
   name: string;
   description: string;
-  photo?: string;
+  photo?: string | ImageMetadata;
   photoAlt?: string;
+  photoIsPlaceholder?: boolean;
 }
 
 // Names, responsibilities, and photos await the approved school content.
@@ -42,10 +46,16 @@ export const departments: Department[] = Array.from({ length: 10 }, (_, index) =
     number,
     name: `Seksi Bidang ${number}`,
     description: 'Nama dan deskripsi bidang segera diumumkan.',
+    photo: purbayaPhoto,
+    photoAlt: `Purbaya sebagai foto contoh untuk Seksi Bidang ${number}`,
+    photoIsPlaceholder: true,
   };
 });
-export const vision: string | null = null;
-export const missions: string[] = [];
+// User-supplied presentation: slide 2 (vision), slide 3 (mission).
+export const vision: string | null = 'Mewujudkan Sekolah Sehat, Menginspirasi, dan Mengapresiasi';
+export const missions: string[] = [
+  'Mengembangkan potensi siswa lewat wadah minat & bakat yang aktif',
+];
 
 export interface Program {
   id: string;
