@@ -10,6 +10,7 @@ export const navigation = [
   { href: '/#tentang', label: 'Tentang' },
   { href: '/#visi-misi', label: 'Visi & misi' },
   { href: '/anggota', label: 'Pengurus' },
+  { href: '/sekbid', label: 'Sekbid' },
   { href: '/#kegiatan', label: 'Kegiatan' },
 ];
 
@@ -23,6 +24,26 @@ export interface Member {
 
 // Publish only the approved 2026/2027 roster. Do not invent student identities.
 export const members: Member[] = [];
+
+export interface Department {
+  id: string;
+  number: string;
+  name: string;
+  description: string;
+  photo?: string;
+  photoAlt?: string;
+}
+
+// Names, responsibilities, and photos await the approved school content.
+export const departments: Department[] = Array.from({ length: 10 }, (_, index) => {
+  const number = String(index + 1).padStart(2, '0');
+  return {
+    id: `sekbid-${number}`,
+    number,
+    name: `Seksi Bidang ${number}`,
+    description: 'Nama dan deskripsi bidang segera diumumkan.',
+  };
+});
 export const vision: string | null = null;
 export const missions: string[] = [];
 

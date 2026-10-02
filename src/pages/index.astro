@@ -3,7 +3,8 @@ import Base from '../layouts/Base.astro';
 import EmptyState from '../components/EmptyState.astro';
 import SectionLabel from '../components/SectionLabel.astro';
 import Statistics from '../components/Statistics.astro';
-import { site, vision, missions, programs, activities } from '../content/site';
+import DepartmentCard from '../components/DepartmentCard.astro';
+import { site, vision, missions, programs, activities, departments } from '../content/site';
 ---
 <Base>
   <section class="hero container" id="hero" data-section="01" aria-labelledby="hero-title">
@@ -43,18 +44,28 @@ import { site, vision, missions, programs, activities } from '../content/site';
     </div>
   </section>
 
-  <section class="section container" id="program" data-section="05" aria-labelledby="program-title">
-    <div class="section-heading" data-motion="reveal"><SectionLabel number="05" label="Rencana kerja" /><h2 id="program-title">Ide menjadi aksi.</h2></div>
+  <section class="department-home container" id="sekbid" data-section="05" aria-labelledby="department-preview-title">
+    <header class="department-directory-heading" data-motion="reveal">
+      <div><SectionLabel number="05" label="Seksi bidang" /><h2 id="department-preview-title">Banyak peran.<br />Satu tujuan.</h2></div>
+      <div><p>Sepuluh bidang yang bergerak bersama untuk Dipo.</p><a class="text-link" href="/sekbid">Kenali semua 10 bidang <span aria-hidden="true">↗</span></a></div>
+    </header>
+    <div class="department-grid department-preview-grid">
+      {departments.slice(0, 3).map((department, index) => <DepartmentCard department={department} preview delay={index * 80} />)}
+    </div>
+  </section>
+
+  <section class="section container bordered-section" id="program" data-section="06" aria-labelledby="program-title">
+    <div class="section-heading" data-motion="reveal"><SectionLabel number="06" label="Rencana kerja" /><h2 id="program-title">Ide menjadi aksi.</h2></div>
     <div class="section-body" data-motion="reveal" data-delay="100">{programs.length > 0 ? <div class="content-list">{programs.map(program => <article><h3>{program.title}</h3><p>{program.description}</p></article>)}</div> : <EmptyState title="Program kerja segera hadir" description="Rencana kegiatan akan tersedia setelah disahkan oleh kepengurusan." />}</div>
   </section>
 
-  <section class="section container bordered-section" id="kegiatan" data-section="06" aria-labelledby="activity-title">
-    <div class="section-heading" data-motion="reveal"><SectionLabel number="06" label="Kabar dari OSIS" /><h2 id="activity-title">Cerita & kegiatan.</h2></div>
+  <section class="section container bordered-section" id="kegiatan" data-section="07" aria-labelledby="activity-title">
+    <div class="section-heading" data-motion="reveal"><SectionLabel number="07" label="Kabar dari OSIS" /><h2 id="activity-title">Cerita & kegiatan.</h2></div>
     <div class="section-body" data-motion="reveal" data-delay="100">{activities.length > 0 ? <div class="content-list">{activities.map(activity => <article><time datetime={activity.date}>{new Intl.DateTimeFormat('id-ID', { dateStyle: 'long', timeZone: 'Asia/Jakarta' }).format(new Date(activity.date))}</time><h3>{activity.title}</h3><p>{activity.description}</p></article>)}</div> : <EmptyState title="Cerita pertama sedang disiapkan" description="Agenda dan dokumentasi kegiatan OSIS akan dibagikan di sini." />}</div>
   </section>
 
-  <section class="aspiration-banner container" data-section="07" data-motion="reveal" aria-labelledby="aspiration-title">
-    <div><SectionLabel number="07" label="Ruang aspirasi" /><h2 id="aspiration-title">Ada ide untuk Dipo?</h2><p>Setiap masukan punya tempat. Ruang aspirasi siswa segera hadir.</p></div>
+  <section class="aspiration-banner container" data-section="08" data-motion="reveal" aria-labelledby="aspiration-title">
+    <div><SectionLabel number="08" label="Ruang aspirasi" /><h2 id="aspiration-title">Ada ide untuk Dipo?</h2><p>Setiap masukan punya tempat. Ruang aspirasi siswa segera hadir.</p></div>
     <a class="button button-light" href="/aspirasi">Lihat ruang aspirasi <span aria-hidden="true">↗</span></a>
   </section>
 </Base>

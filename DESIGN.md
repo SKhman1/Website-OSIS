@@ -25,7 +25,7 @@ small vertical reveals, staggered hero entry, responsive hover/press feedback,
 and a brief ambient orbit entrance. No continuous loops or animation libraries.
 
 Homepage sequence: 01 hero, 02 statistics, 03 about, 04 vision/mission,
-05 programs, 06 activities, 07 aspirations. Other public pages have numbered,
+05 departments, 06 programs, 07 activities, 08 aspirations. Other public pages have numbered,
 labelled semantic sections with their own heading relationships.
 
 Statistics contain explicitly labelled preview values until verified data is set
@@ -37,6 +37,20 @@ prevent horizontal layout shift. Reduced motion skips the sequence entirely.
 All content stays visible without JS. Motion stops on hidden/unloaded pages,
 and native cross-document view transitions gracefully fall back to normal
 navigation. No SPA router, scroll interception, or React dependency is needed.
+
+## Sekbid directory
+
+Ten photo cards live at `/sekbid` in a balanced two-column desktop gallery and
+one column on mobile. Numbered anchor links jump directly to any team. The
+homepage previews three cards with links to their anchors in the full directory.
+No autoplay carousel, gesture-only navigation, or additional JS is needed.
+
+Cards reuse the orange tokens, Manrope, spacing scale, and motion timings.
+Real photos use an 8:5 crop, reserved dimensions, lazy loading, and descriptive
+alt text. Until supplied, an explicit typographic photo placeholder is shown.
+Names and descriptions remain stubs; no student faces or roles are invented.
+Interactive preview cards have keyboard focus, hover/press feedback, and reduced
+motion support. The directory's information cards do not pretend to be buttons.
 
 ## Developer joke
 

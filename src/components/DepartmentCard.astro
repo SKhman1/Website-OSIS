@@ -1,0 +1,33 @@
+---
+import type { Department } from '../content/site';
+interface Props { department: Department; preview?: boolean; delay?: number; }
+const { department, preview = false, delay = 0 } = Astro.props;
+const Tag = preview ? 'a' : 'article';
+---
+<Tag
+  class:list={['department-card', 'fucknutcard', { 'department-preview-card': preview }]}
+  href={preview ? `/sekbid#${department.id}` : undefined}
+  id={preview ? undefined : department.id}
+  aria-labelledby={`${preview ? 'preview-' : ''}${department.id}-title`}
+  data-motion="reveal"
+  data-delay={delay}
+  data-department={department.id}
+>
+  <div class="department-photo">
+    {department.photo ? (
+      <img src={department.photo} alt={department.photoAlt ?? `Tim ${department.name}`} width="960" height="600" loading="lazy" decoding="async" />
+    ) : (
+      <div class="department-photo-placeholder">
+        <span class="department-photo-label">OSIS DIPO 1 <span aria-hidden="true">/</span> SEKSI BIDANG</span>
+        <span class="department-photo-number" aria-hidden="true">{department.number}</span>
+        <span class="department-photo-caption"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z" /><circle cx="12" cy="13" r="4" /></svg>Foto tim segera hadir</span>
+      </div>
+    )}
+    <span class="department-number-badge" aria-hidden="true">{department.number}</span>
+  </div>
+  <div class="department-card-body">
+    <h3 id={`${preview ? 'preview-' : ''}${department.id}-title`}>{department.name}</h3>
+    <p>{department.description}</p>
+    {preview && <span class="department-card-link">Lihat bidang <span aria-hidden="true">↗</span></span>}
+  </div>
+</Tag>

@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionLabel from '../components/SectionLabel.astro';
+import DepartmentCard from '../components/DepartmentCard.astro';
+import { site, departments } from '../content/site';
+---
+<Base title="Seksi bidang OSIS" description={`Kenali 10 seksi bidang OSIS ${site.school} periode ${site.term}.`}>
+  <div class="container page-content">
+    <a class="text-link back-link" href="/">← Beranda</a>
+    <section class="page-heading" data-section="01" aria-labelledby="departments-title">
+      <div data-motion="hero"><SectionLabel number="01" label={`Kepengurusan ${site.term}`} /></div>
+      <h1 id="departments-title" data-motion="hero" data-delay="90">Sepuluh bidang.<br />Satu langkah bersama.</h1>
+      <p data-motion="hero" data-delay="180">Kenali tim-tim yang bekerja bersama di dalam OSIS Dipo 1.</p>
+    </section>
+    <section class="page-section" data-section="02" aria-labelledby="directory-title">
+      <header class="department-directory-heading" data-motion="reveal">
+        <div><SectionLabel number="02" label="Seksi bidang" /><h2 id="directory-title">Tim di balik kegiatan.</h2></div>
+        <p>Foto, nama bidang, dan deskripsi resmi akan melengkapi halaman ini setelah diumumkan.</p>
+      </header>
+      <nav class="department-index" aria-label="Langsung ke seksi bidang" data-motion="reveal">
+        <span>Pilih bidang</span>
+        <ol>{departments.map(department => <li><a href={`#${department.id}`} aria-label={`Ke ${department.name}`}>{department.number}</a></li>)}</ol>
+      </nav>
+      <div class="department-grid">
+        {departments.map((department, index) => <DepartmentCard department={department} delay={index % 2 * 80} />)}
+      </div>
+    </section>
+    <section class="page-section member-contact" data-section="03" data-motion="reveal" aria-labelledby="department-contact-title">
+      <div><SectionLabel number="03" label="Kenali lebih dekat" /><h2 id="department-contact-title">Satu organisasi, banyak peran.</h2></div>
+      <a class="button" href="/anggota">Kenali pengurus <span aria-hidden="true">↗</span></a>
+    </section>
+  </div>
+</Base>

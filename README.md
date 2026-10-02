@@ -41,7 +41,7 @@ No roster or policy content was provided, so these sections show honest empty
 states. The temporary typographic logo and orange token need official assets.
 Nixxie has no artwork yet. The console warning references its name only.
 
-The homepage now has seven numbered sections with section 02 reserved for
+The homepage now has eight numbered sections with section 02 reserved for
 statistics. Demo numbers are visibly marked as examples. Set a statistic's
 `value` in `src/content/site.ts` only after verification; `null` retains the
 example label and preview value. Buttons have hover/press feedback, hero content
@@ -88,7 +88,7 @@ fields, hidden controls, class names, or a console warning as authorization.
 
 ## Cloudflare Pages deployment
 
-Live site: https://osis-dipo1.pages.dev/
+Live site: https://vnd-smkdipo1.pages.dev/
 Private source repository: https://github.com/SKhman1/Website-OSIS
 
 The `pages.dev` target uses static HTML from `dist-pages/` and a small Pages
@@ -105,7 +105,7 @@ with Cloudflare and create a Direct Upload project:
 
 ```sh
 npx wrangler login
-npx wrangler pages project create osis-dipo1 --production-branch main
+npx wrangler pages project create vnd-smkdipo1 --production-branch main
 npm run deploy:pages
 ```
 
@@ -122,6 +122,19 @@ setup keeps the public site static and lets Pages Functions handle the future
 form. Before enabling persistence, choose a Cloudflare-compatible remote libSQL
 driver or implement a D1 binding and migration; a local SQLite file cannot be
 used as persistent storage in Pages Functions.
+
+## Seksi bidang content
+
+`src/content/site.ts` exports ten `departments` with stable IDs. Replace each
+stub name and description with approved content, then set `photo` to a local
+asset URL such as `/images/sekbid/sekbid-01.webp` and `photoAlt` to a meaningful
+description. Store approved photos in `public/images/sekbid/`. Prefer optimized
+WebP/AVIF assets and an 8:5 composition for the gallery.
+
+The full grid lives at `/sekbid`. Three preview cards on the homepage link to
+the first three teams via URL anchors; all ten remain available in the gallery.
+No carousel dependency or social-media embed is loaded. Research limitations
+and public sources are documented in `SOCIAL-RESEARCH.md`.
 
 ## Developer Easter egg
 

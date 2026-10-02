@@ -13,7 +13,7 @@
     "test": "tsx --test tests/*.test.ts",
     "build:pages": "astro build --config astro.pages.config.mjs",
     "preview:pages": "wrangler pages dev dist-pages --ip 127.0.0.1 --port 8788",
-    "deploy:pages": "npm run build:pages && wrangler pages deploy dist-pages --project-name osis-dipo1 --branch main"
+    "deploy:pages": "npm run build:pages && wrangler pages deploy dist-pages --project-name vnd-smkdipo1 --branch main"
   },
   "dependencies": {
     "@astrojs/node": "11.1.6",
