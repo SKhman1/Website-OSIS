@@ -35,6 +35,7 @@ assert.equal(p.document.querySelector('[data-cms-stat="activities"] .preview-bad
 assert.equal(p.document.querySelector('[data-cms-stat="programs"] [data-stat-accessible]').textContent,'17');
 assert.deepEqual([...p.document.querySelectorAll('.social-link')].map(a=>a.href),['https://www.instagram.com/osis_smkdipo1/','https://www.tiktok.com/@osis_smkdipo1','mailto:osissmkdiposatu@gmail.com']);
 assert.equal(p.document.querySelectorAll('.social-icon svg').length,3);
+c.statistics.programs=99999;p.render(c);assert.equal(p.document.querySelector('[data-cms-stat="programs"]').dataset.countDigits,'5');
 console.log('PASS published identity, term, logo, zero/statistic verification, escaped name and contact logos');
 console.log('PASS homepage content, four core cards, four bidang previews, rundown and notification feed; text stays escaped');
 p=page('anggota/profil-template/index.html','/anggota/pembina/new-advisor');

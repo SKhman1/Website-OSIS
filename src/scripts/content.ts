@@ -68,7 +68,7 @@ export function renderContent(content: CmsContent) {
   let statsChanged=false;
   for(const [key,preview] of [['members',24],['programs',8],['activities',12]] as const){
     const node=document.querySelector<HTMLElement>(`[data-cms-stat="${key}"]`);if(!node)continue;
-    const value=content.statistics[key], target=value??preview, counter=node.querySelector<HTMLElement>('[data-counter]');
+    const value=content.statistics[key], target=value??preview;node.dataset.countDigits=String(String(target).length);const counter=node.querySelector<HTMLElement>('[data-counter]');
     if(counter){if(counter.dataset.value!==String(target)){statsChanged=true;counter.dataset.value=String(target);}if(node.closest<HTMLElement>('[data-stats]')?.dataset.counterState!=='running')counter.textContent=String(target).padStart(2,'0');}
     const accessible=node.querySelector('[data-stat-accessible]');if(accessible)accessible.textContent=value===null?`Contoh: ${preview}`:String(value);
     const badge=node.querySelector<HTMLElement>('.preview-badge');if(badge)badge.hidden=value!==null;

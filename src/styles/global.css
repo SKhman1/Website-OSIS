@@ -613,3 +613,8 @@ button:disabled { background: #dde1d9; color: #596058; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .social-link, .social-icon, .social-arrow { transition: none; } .social-link:hover, .social-link:active, .social-link:hover .social-icon, .social-link:hover .social-arrow { transform: none; } }
 
 .preview-badge[hidden], .statistics-note[hidden] { display: none; }
+
+/* Four/five-digit edits fit their own card even on narrow phones. */
+.statistic { container-type: inline-size; }
+.statistic[data-count-digits="4"] .statistic-value { font-size: 2rem; font-size: min(5.5rem, 40cqw); }
+.statistic[data-count-digits="5"] .statistic-value { font-size: 1.6rem; font-size: min(5.5rem, 32cqw); }
