@@ -1,0 +1,8 @@
+/sekbid /anggota/seksi-bidang 301
+/sekbid/ /anggota/seksi-bidang 301
+/seksi-bidang /anggota/seksi-bidang 301
+/seksi-bidang/ /anggota/seksi-bidang 301
+/anggota/pembina-osis /anggota/pembina/pembina-osis 301
+/anggota/pembina-osis/ /anggota/pembina/pembina-osis 301
+/sekbid/:id/ /anggota/seksi-bidang/:id 301
+/sekbid/:id /anggota/seksi-bidang/:id 301

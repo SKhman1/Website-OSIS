@@ -1,12 +1,12 @@
 ---
-import Base from '../layouts/Base.astro';
-import SectionLabel from '../components/SectionLabel.astro';
-import DepartmentCard from '../components/DepartmentCard.astro';
-import { site, departments } from '../content/site';
+import Base from '../../layouts/Base.astro';
+import SectionLabel from '../../components/SectionLabel.astro';
+import DepartmentCard from '../../components/DepartmentCard.astro';
+import { site, departments } from '../../content/site';
 ---
 <Base title="Seksi bidang OSIS" description={`Kenali 10 seksi bidang OSIS ${site.school} periode ${site.term}.`}>
   <div class="container page-content">
-    <a class="text-link back-link" href="/">← Beranda</a>
+    <a class="text-link back-link" href="/#seksi-bidang">← Seksi bidang di beranda</a>
     <section class="page-heading" data-section="01" aria-labelledby="departments-title">
       <div data-motion="hero"><SectionLabel number="01" label={`Kepengurusan ${site.term}`} /></div>
       <h1 id="departments-title" data-motion="hero" data-delay="90">Sepuluh bidang.<br />Satu langkah bersama.</h1>
@@ -27,7 +27,7 @@ import { site, departments } from '../content/site';
     </section>
     <section class="page-section member-contact" data-section="03" data-motion="reveal" aria-labelledby="department-contact-title">
       <div><SectionLabel number="03" label="Kenali lebih dekat" /><h2 id="department-contact-title">Satu organisasi, banyak peran.</h2></div>
-      <a class="button" href="/anggota">Kenali pengurus <span aria-hidden="true">↗</span></a>
+      <a class="button" href="/anggota">Kenali pengurus inti <span aria-hidden="true">↗</span></a>
     </section>
   </div>
 </Base>

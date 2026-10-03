@@ -43,7 +43,7 @@ function initialize(host: HTMLElement) {
   const announcer = document.querySelector<HTMLElement>('[data-island-announcer]')!;
   const menu = header.querySelector<HTMLDetailsElement>('details.mobile-menu');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const mobile = matchMedia('(max-width: 1100px)');
+  const mobile = matchMedia('(max-width: 1200px)');
   const labels = { success: 'Aspirasi diterima', live: 'Sedang berlangsung', event: 'Agenda OSIS', info: 'Kabar OSIS' };
   const dismissed = new Set<string>();
   let approved: Announcement[] = [];

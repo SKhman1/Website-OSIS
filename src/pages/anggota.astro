@@ -2,26 +2,19 @@
 import Base from '../layouts/Base.astro';
 import SectionLabel from '../components/SectionLabel.astro';
 import LeadershipCard from '../components/LeadershipCard.astro';
-import DepartmentCard from '../components/DepartmentCard.astro';
-import { site, members, advisors, coreLeadership, departments } from '../content/site';
+import { site, coreLeadership } from '../content/site';
 ---
-<Base title="Pengurus OSIS">
+<Base title="Pengurus inti OSIS">
   <div class="container page-content">
-    <a class="text-link back-link" href="/">← Beranda</a>
-    <section class="page-heading" data-section="01" aria-labelledby="members-title"><div data-motion="hero"><SectionLabel number="01" label={`Periode ${site.term}`} /></div><h1 id="members-title" data-motion="hero" data-delay="90">Kenali pengurus.</h1><p data-motion="hero" data-delay="180">Guru pembina, pengurus inti, dan tim seksi bidang yang mendampingi kegiatan serta suara siswa Dipo.</p></section>
-    <section class="page-section" data-section="02" aria-labelledby="advisors-title">
-      <header class="page-section-heading" data-motion="reveal"><SectionLabel number="02" label="Guru pembina" /><h2 id="advisors-title">Mendampingi langkah OSIS.</h2><p class="roster-note">Nama pembina akan ditampilkan setelah dikonfirmasi oleh sekolah.</p></header>
-      <div class="advisor-grid">{advisors.map(person => <LeadershipCard person={person} />)}</div>
-    </section>
-    <section class="page-section" data-section="03" aria-labelledby="core-title">
-      <header class="page-section-heading" data-motion="reveal"><SectionLabel number="03" label="Pengurus inti OSIS" /><h2 id="core-title">Empat peran, satu tim.</h2></header>
+    <a class="text-link back-link" href="/#kepengurusan">← Kepengurusan di beranda</a>
+    <section class="page-heading" data-section="01" aria-labelledby="members-title"><div data-motion="hero"><SectionLabel number="01" label={`Pengurus inti · ${site.term}`} /></div><h1 id="members-title" data-motion="hero" data-delay="90">Empat peran.<br />Satu tim.</h1><p data-motion="hero" data-delay="180">Ketua, Wakil Ketua, Sekretaris, dan Bendahara {site.name}. Buka setiap profil untuk mengenal peran, program kerja, dan hasil kerjanya.</p></section>
+    <section class="page-section" data-section="02" aria-labelledby="core-title">
+      <header class="page-section-heading" data-motion="reveal"><SectionLabel number="02" label="Pengurus inti OSIS" /><h2 id="core-title">Kenali pengurus inti.</h2></header>
       <div class="leadership-grid">{coreLeadership.map((person, index) => <LeadershipCard person={person} delay={index * 60} />)}</div>
-      {members.length > 0 && <div class="leadership-grid approved-roster">{members.map(person => <LeadershipCard person={person} />)}</div>}
     </section>
-    <section class="page-section" data-section="04" aria-labelledby="department-title">
-      <header class="department-directory-heading" data-motion="reveal"><div><SectionLabel number="04" label="Seksi bidang" /><h2 id="department-title">Tim di balik kegiatan.</h2></div><a class="text-link" href="/sekbid">Kenali semua 10 bidang <span aria-hidden="true">↗</span></a></header>
-      <div class="department-grid department-preview-grid">{departments.slice(0, 4).map((department, index) => <DepartmentCard department={department} preview delay={index * 60} />)}</div>
+    <section class="page-section" data-section="03" aria-labelledby="organization-title">
+      <header class="page-section-heading" data-motion="reveal"><SectionLabel number="03" label="Satu kepengurusan" /><h2 id="organization-title">Kenali peran lainnya.</h2></header>
+      <nav class="profile-index" aria-label="Daftar kepengurusan lainnya"><a href="/anggota/pembina">Guru pembina <span aria-hidden="true">↗</span></a><a href="/anggota/seksi-bidang">Seksi bidang <span aria-hidden="true">↗</span></a></nav>
     </section>
-    <section class="page-section member-contact" data-section="05" data-motion="reveal" aria-labelledby="member-contact-title"><div><SectionLabel number="05" label="Tetap terhubung" /><h2 id="member-contact-title">Punya masukan untuk kami?</h2></div><a class="button" href="/aspirasi">Ruang aspirasi <span aria-hidden="true">↗</span></a></section>
   </div>
 </Base>

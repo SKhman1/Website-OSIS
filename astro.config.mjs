@@ -1,8 +1,10 @@
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
+import { redirects } from './config/redirects.mjs';
 
 export default defineConfig({
   output: 'static',
+  redirects,
   adapter: node({ mode: 'standalone' }),
   integrations: [{
     name: 'osis-local-api',

@@ -158,8 +158,8 @@ as a placeholder. Imported images can also be stored in `src/assets/` for
 Astro optimization. Set `photoIsPlaceholder: false` when supplying real team
 photos, and provide a matching `photoAlt` description.
 
-The full grid lives at `/sekbid`. Four preview cards on the homepage link to
-the first four teams via URL anchors; all ten remain available in the gallery.
+The full grid lives at `/anggota/seksi-bidang`. Four preview cards on the homepage
+open individual team profiles; all ten remain available in the gallery.
 No carousel dependency or social-media embed is loaded. Research limitations
 and public sources are documented in `SOCIAL-RESEARCH.md`.
 
@@ -167,9 +167,12 @@ Current aspirations setup and deferred WhatsApp work are recorded in `ROADMAP.md
 
 ## Leadership content
 
-`src/content/site.ts` exports `advisors` and `coreLeadership`. Both the homepage
-and `/anggota` stack teacher advisors above Ketua, Wakil Ketua, Sekretaris, and
-Bendahara, followed by four department previews and a link to the full directory.
+`src/content/site.ts` exports `advisors` and `coreLeadership`. The homepage stacks
+teacher advisors above the four core roles, followed by department previews.
+`/anggota` lists only Ketua, Wakil Ketua, Sekretaris, and Bendahara;
+`/anggota/pembina` lists all supplied advisors. Add advisors to the array with
+stable unique IDs; their directory cards and nested profiles generate automatically.
+The current advisor entry is a placeholder, not a confirmed complete staff list.
 Fill each leadership entry's `name` with approved content and replace its photo
 and alt text; set `photoIsPlaceholder` to false for real portraits.
 
@@ -225,11 +228,19 @@ supported. The skill guides timing and choreography; no Lottie runtime is loaded
 ## People, departments, and work
 
 Core profile pages are `/anggota/ketua`, `/anggota/wakil-ketua`,
-`/anggota/sekretaris`, and `/anggota/bendahara`. The teacher has a prepared page
-at `/anggota/pembina-osis`. Each of the ten departments has a page at
-`/sekbid/sekbid-01` through `/sekbid/sekbid-10`. Directory/home cards link to
+`/anggota/sekretaris`, and `/anggota/bendahara`. Advisor profiles use
+`/anggota/pembina/[id]`, currently `/anggota/pembina/pembina-osis`.
+Each of the ten departments has a page at `/anggota/seksi-bidang/sekbid-01`
+through `/anggota/seksi-bidang/sekbid-10`. Directory/home cards link to
 these static pages, with shared photo previews, numbered sections, program
 details, and a results area. Detail pages keep the shared notification island.
+
+Navbar links **Kepengurusan** and **Seksi Bidang** go to `/#kepengurusan`
+and `/#seksi-bidang` on the homepage. Section buttons open the corresponding
+directories. The old `#sekbid` bookmark remains supported. Pages redirects in
+`public/_redirects` permanently forward `/sekbid`, its ten existing profiles,
+`/seksi-bidang`, and `/anggota/pembina-osis` to the new hierarchy; local Astro
+redirects mirror these in `config/redirects.mjs`.
 
 Edit `src/content/site.ts` for identities, introductions, department `memberIds`,
 `programIds`, and `results`. Add additional named member profiles to `members`;

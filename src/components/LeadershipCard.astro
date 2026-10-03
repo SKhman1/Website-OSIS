@@ -1,13 +1,13 @@
 ---
 import { Image } from 'astro:assets';
-import type { LeadershipMember } from '../content/site';
+import { profileHref, type LeadershipMember } from '../content/site';
 interface Props {
   person: LeadershipMember;
   href?: string;
   headingLevel?: 'h3' | 'h4';
   delay?: number;
 }
-const { person, href = `/anggota/${person.id}`, headingLevel = 'h3', delay = 0 } = Astro.props;
+const { person, href = profileHref(person), headingLevel = 'h3', delay = 0 } = Astro.props;
 const Tag = href ? 'a' : 'article';
 const Heading = headingLevel;
 const titleId = `${href ? 'preview-' : ''}${person.id}-title`;

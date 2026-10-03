@@ -15,8 +15,8 @@ export const site = {
 export const navigation = [
   { href: '/#tentang', label: 'Tentang' },
   { href: '/#visi-misi', label: 'Visi & misi' },
-  { href: '/anggota', label: 'Pengurus' },
-  { href: '/sekbid', label: 'Sekbid' },
+  { href: '/#kepengurusan', label: 'Kepengurusan' },
+  { href: '/#seksi-bidang', label: 'Seksi Bidang' },
   { href: '/#kegiatan', label: 'Kegiatan' },
 ];
 
@@ -65,6 +65,12 @@ export const coreLeadership: LeadershipMember[] = [
   photoIsPlaceholder: true, results: [],
 }));
 export const profiles = [...advisors, ...coreLeadership, ...members];
+
+export function profileHref(person: LeadershipMember): string {
+  return advisors.some(advisor => advisor.id === person.id)
+    ? `/anggota/pembina/${person.id}`
+    : `/anggota/${person.id}`;
+}
 
 export interface Department {
   id: string;

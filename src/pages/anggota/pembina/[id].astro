@@ -1,0 +1,10 @@
+---
+import MemberProfile from '../../../components/MemberProfile.astro';
+import { advisors, type LeadershipMember } from '../../../content/site';
+export function getStaticPaths() {
+  return advisors.map(person => ({ params: { id: person.id }, props: { person } }));
+}
+interface Props { person: LeadershipMember; }
+const { person } = Astro.props;
+---
+<MemberProfile person={person} group="advisor" />
