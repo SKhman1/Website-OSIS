@@ -6,6 +6,7 @@ import Statistics from '../components/Statistics.astro';
 import DepartmentCard from '../components/DepartmentCard.astro';
 import LeadershipCard from '../components/LeadershipCard.astro';
 import { site, vision, missions, programs, activities, departments, advisors, coreLeadership } from '../content/site';
+const aspirationsOpen = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' && Boolean(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY);
 ---
 <Base>
   <section class="hero container" id="hero" data-section="01" aria-labelledby="hero-title">
@@ -75,7 +76,7 @@ import { site, vision, missions, programs, activities, departments, advisors, co
   </section>
 
   <section class="aspiration-banner container" data-section="08" data-motion="reveal" aria-labelledby="aspiration-title">
-    <div><SectionLabel number="08" label="Ruang aspirasi" /><h2 id="aspiration-title">Ada ide untuk Dipo?</h2><p>Setiap masukan punya tempat. Ruang aspirasi siswa segera hadir.</p></div>
-    <a class="button button-light" href="/aspirasi">Lihat ruang aspirasi <span aria-hidden="true">↗</span></a>
+    <div><SectionLabel number="08" label="Ruang aspirasi" /><h2 id="aspiration-title">Ada ide untuk Dipo?</h2><p>{aspirationsOpen ? 'Setiap masukan punya tempat. Sampaikan ide dan saranmu untuk sekolah dan OSIS.' : 'Setiap masukan punya tempat. Ruang aspirasi siswa segera hadir.'}</p></div>
+    <a class="button button-light" href="/aspirasi">{aspirationsOpen ? 'Sampaikan aspirasi' : 'Lihat ruang aspirasi'} <span aria-hidden="true">↗</span></a>
   </section>
 </Base>

@@ -101,8 +101,11 @@ blindly creating another response. Failed submissions preserve browser inputs.
 No sensitive request bodies or upstream responses are logged or returned.
 
 Unit/integration tests use an injected HTTP transport and a mocked Apps Script
-runtime; they never submit to the real Google Form. A real end-to-end test still
-requires owner authorization/setup and working Google/Turnstile credentials.
+runtime; they never submit to the real Google Form. On 3 October 2026, a separate
+production browser test received a confirmed Apps Script receipt for one response
+labelled `UJI INTEGRASI — bukan aspirasi siswa`, with OSIS and Other categories.
+Production submission is now enabled. The owner can inspect that test response
+in the private Google Forms Responses tab.
 
 ## Cloudflare Pages deployment
 

@@ -6,9 +6,10 @@ Use a native website form backed by Google Forms. Respondent link:
 https://forms.gle/oX6GDK8YqjM5HfzW7
 
 The three questions were verified from the published respondent page. Code for
-the website, submission API, and owner-installed Apps Script is prepared.
-Submission stays closed until the owner deploys/authorizes the script, configures
-secrets and Turnstile, and completes an explicitly labelled end-to-end test.
+the website, submission API, and owner-installed Apps Script is deployed.
+Production submission is enabled after owner setup and a labelled browser test
+on 3 October 2026. Apps Script confirmed receipt of one test response containing
+OSIS and Other categories. The private Forms response list remains an owner check.
 Owner steps are in `integrations/google-forms/SETUP.md`.
 
 Staff view results in Google Forms/Sheets. No custom database, staff web

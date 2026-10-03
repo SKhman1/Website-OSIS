@@ -53,9 +53,15 @@ export async function signEnvelope(timestamp: number, requestId: string, payload
 export async function handleAspirationRequest(request: Request, env: AspirationEnvironment = {}, dependencies: Dependencies = {}): Promise<Response> {
   if (request.method !== 'POST') return closedAspirationsResponse(request.method);
   const scriptUrl = env.GOOGLE_FORMS_SCRIPT_URL ?? '';
-  if (env.ASPIRATIONS_ENABLED !== 'true' || !env.TURNSTILE_SECRET_KEY ||
-      (env.GOOGLE_FORMS_SHARED_SECRET?.length ?? 0) < 32 ||
-      !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(scriptUrl)) {
+  const configuration = {
+    enabled: env.ASPIRATIONS_ENABLED === 'true',
+    turnstile: Boolean(env.TURNSTILE_SECRET_KEY),
+    sharedSecret: (env.GOOGLE_FORMS_SHARED_SECRET?.length ?? 0) >= 32,
+    scriptUrl: /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(scriptUrl),
+  };
+  if (Object.values(configuration).some(ready => !ready)) {
+    // Private operator logs contain readiness flags only, never credential values.
+    console.warn('ASPIRATION_CONFIGURATION_INCOMPLETE', configuration);
     return closedAspirationsResponse('POST');
   }
   const origin = new URL(request.url).origin;
