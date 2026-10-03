@@ -1,0 +1,45 @@
+// Offline DOM integration: no browser, remote page load, or student submission.
+import { Window } from 'happy-dom';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+const transform=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
+const helper={exports:{}};vm.runInNewContext(transform(fs.readFileSync('src/lib/cms-content.ts','utf8')),{exports:helper.exports,Date,Set});
+const seed=JSON.parse(fs.readFileSync('dist-pages/content-seed.json','utf8'));
+function page(file,path){
+  const window=new Window({url:'https://offline.invalid'+path,settings:{disableJavaScriptFileLoading:true,disableJavaScriptEvaluation:true,disableCSSFileLoading:true,disableIframePageLoading:true}});
+  window.document.write(fs.readFileSync('dist-pages/'+file,'utf8'));
+  const result={};window.setInterval=()=>1;
+  vm.runInNewContext(transform(fs.readFileSync('src/scripts/content.ts','utf8')),{exports:result,require:()=>helper.exports,window,document:window.document,location:window.location,HTMLAnchorElement:window.HTMLAnchorElement,CustomEvent:window.CustomEvent,Intl,Date,Number,Boolean,fetch:async()=>({ok:false}),clearInterval:()=>{}});
+  return {window,document:window.document,render:result.renderContent};
+}
+const c=structuredClone(seed);
+c.vision='<img src=x onerror=alert(1)>';c.people.find(p=>p.id==='ketua').name='Updated Ketua';
+c.events=[{id:'qa-event',title:'QA Event',description:'Offline only',date:'2026-10-03',location:'Aula',start:'07:00',end:'08:00',notify:true,rundown:[{start:'07:00',end:'07:30',agenda:'Registrasi',location:'Aula'}]}];
+let p=page('index.html','/');let notices;p.window.addEventListener('osis:announcements',event=>notices=event.detail);p.render(c);
+assert.equal(p.document.querySelector('[data-cms-vision]').textContent,c.vision);assert.equal(p.document.querySelector('[data-cms-vision] img'),null);
+assert.equal(p.document.querySelectorAll('[data-cms-people="core"] a').length,4);
+assert.equal(p.document.querySelectorAll('[data-cms-departments] .department-card').length,4);
+assert.match(p.document.querySelector('[data-cms-events]').textContent,/07:00–07:30 WIB/);
+assert.equal(notices.length,1);assert.equal(JSON.parse(p.document.querySelector('[data-notification-island]').dataset.announcements).length,1);
+console.log('PASS homepage content, four core cards, four bidang previews, rundown and notification feed; text stays escaped');
+p=page('anggota/profil-template/index.html','/anggota/pembina/new-advisor');
+c.people.push({...c.people[0],id:'new-advisor',group:'advisor',name:'Pembina Baru',classLabel:'',programIds:[],results:[]});p.render(c);
+assert.equal(p.document.querySelector('#profile-title').textContent,'Pembina Baru');
+assert.equal(p.document.querySelector('.profile-breadcrumb a:nth-of-type(2)').pathname,'/anggota/pembina');
+assert.equal(p.document.querySelector('[data-cms-peers] a').pathname,'/anggota/pembina/pembina-osis');
+assert.match(p.document.querySelector('.profile-hero .section-label').textContent,/Pembina OSIS/);
+console.log('PASS dynamically created adviser profile, correct breadcrumb, role and peers');
+p=page('anggota/seksi-bidang/sekbid-01/index.html','/anggota/seksi-bidang/sekbid-01');
+c.people.push({...c.people[1],id:'new-member',group:'member',role:'Anggota Bidang',name:'Anggota Baru',programIds:[],results:[]});
+c.departments[0].name='Nama Bidang Baru';c.departments[0].memberIds=['new-member'];c.departments[0].programIds=[c.programs[0].id];
+c.departments[0].results=[{id:'hasil-1',title:'Hasil Kerja',description:'Laporan offline',date:'2026-10-03'}];p.render(c);
+assert.equal(p.document.querySelector('#profile-title').textContent,'Nama Bidang Baru');
+assert.equal(p.document.querySelector('[data-cms-team] a').pathname,'/anggota/new-member');
+assert.match(p.document.querySelector('[data-cms-programs]').textContent,new RegExp(c.programs[0].title));
+assert.match(p.document.querySelector('[data-cms-results]').textContent,/Hasil Kerja/);
+console.log('PASS bidang updates name, member link, program and completed work');
+p=page('anggota/pembina/pembina-osis/index.html','/anggota/pembina/pembina-osis');p.render(c);
+assert.equal(p.document.querySelector('[data-cms-peers] a').pathname,'/anggota/pembina/new-advisor');
+console.log('PASS original single-adviser page accepts new peer cards');

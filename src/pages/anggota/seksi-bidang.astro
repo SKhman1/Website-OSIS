@@ -21,7 +21,7 @@ import { site, departments } from '../../content/site';
         <span>Pilih bidang</span>
         <ol>{departments.map(department => <li><a href={`#${department.id}`} aria-label={`Ke ${department.name}`}>{department.number}</a></li>)}</ol>
       </nav>
-      <div class="department-grid">
+      <div class="department-grid" data-cms-departments>
         {departments.map((department, index) => <DepartmentCard department={department} delay={index % 2 * 80} />)}
       </div>
     </section>

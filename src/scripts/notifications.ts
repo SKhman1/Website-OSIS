@@ -363,6 +363,10 @@ function initialize(host: HTMLElement) {
     if (next) boundaryTimer = window.setTimeout(() => { refresh(); scheduleBoundary(); }, Math.min(next - now + 10, 2147483647));
   }
   scheduleBoundary();
+  window.addEventListener('osis:announcements', event => {
+    const items = (event as CustomEvent<Announcement[]>).detail;
+    if (Array.isArray(items)) { approved = items; refresh(); scheduleBoundary(); }
+  });
   window.addEventListener('pagehide', () => { pauseTimer(); pauseMarquee(); previewAnimation?.cancel(); cancelAnimationFrame(tickerFrame); });
   window.addEventListener('pageshow', () => { resumeTimer(); resumeMarquee(); refresh(); scheduleBoundary(); });
 }

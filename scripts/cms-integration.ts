@@ -1,0 +1,54 @@
+// Run against wrangler pages dev with the local D1 fixture only.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const base='http://127.0.0.1:8791';
+const password='Disposable CMS local test password 2026.';
+async function call(path:string,method='GET',data?:unknown,token?:string,headers:Record<string,string>={}){
+  const response=await fetch(base+path,{method,headers:{...(data?{'Content-Type':'application/json'}:{}),...(token?{Authorization:`Bearer ${token}`}:{ }),...headers},body:data?JSON.stringify(data):undefined});
+  const result=await response.json();return {response,result};
+}
+const cases:string[]=[];
+function check(condition:unknown,name:string){assert.ok(condition,name);cases.push(name);}
+const pub=await call('/api/content');check(pub.response.status===200,'public content is readable');const baseline=pub.result.content.vision;
+check(!JSON.stringify(pub.result).match(/password_hash|cms_accounts|username|draft/),'public payload excludes administration');
+check((await call('/api/manage/content')).response.status===401,'missing token rejected');
+check((await call('/api/manage/content','GET',undefined,'0'.repeat(64))).response.status===401,'forged token rejected');
+check((await call('/api/manage/login','POST',{username:'qa-owner',password:'wrong'})).response.status===401,'wrong password rejected');
+check((await call('/api/manage/login','POST',{username:'qa-owner',password},undefined,{Origin:base})).response.status===403,'browser-origin login rejected');
+const login=await call('/api/manage/login','POST',{username:'qa-owner',password});check(login.response.status===200,'owner password login succeeds');const owner=login.result.token;
+const editor=(await call('/api/manage/login','POST',{username:'qa-editor',password})).result.token;
+check((await call('/api/manage/publish','POST',{version:0},editor)).response.status===403,'editor cannot publish');
+const loaded=(await call('/api/manage/content','GET',undefined,owner)).result;let version=loaded.version;
+const c=structuredClone(loaded.content);c.vision='Local integration draft — not real school content';
+check((await call('/api/manage/content','PUT',{version,content:{...c,private:'bad'}},owner)).response.status===400,'unknown content fields rejected');
+const saved=await call('/api/manage/content','PUT',{version,content:c},editor);check(saved.response.status===200,'editor saves draft');version=saved.result.version;
+check((await call('/api/content')).result.content.vision===baseline,'draft does not change public content');
+check((await call('/api/manage/content','PUT',{version:version-1,content:c},owner)).response.status===409,'stale writes cannot overwrite a newer draft');
+const seed=JSON.parse(fs.readFileSync('dist-pages/content-seed.json','utf8'));const originalPath=seed.people[0].photo;
+const webp=fs.readFileSync('dist-pages'+originalPath);
+const upload=await fetch(base+'/api/manage/media',{method:'POST',headers:{Authorization:`Bearer ${owner}`,'Content-Type':'image/webp'},body:webp});const media=await upload.json();check(upload.status===200,'validated WebP upload succeeds');
+c.people[0].photo=media.path;c.people[0].photoIsPlaceholder=false;
+version=(await call('/api/manage/content','PUT',{version,content:c},owner)).result.version;
+check((await fetch(base+media.path)).status===404,'draft photo is private');
+check((await fetch(base+media.path,{headers:{Authorization:`Bearer ${owner}`}})).status===200,'authenticated draft photo preview works');
+const published=await call('/api/manage/publish','POST',{version},owner);check(published.response.status===200,'owner publication succeeds');version=published.result.version;
+check((await call('/api/content')).result.content.vision===c.vision,'published content updates public API without a build');
+check((await fetch(base+media.path)).status===200,'only published photo is publicly served');
+const updated=(await call('/api/manage/content','GET',undefined,owner)).result.content;
+updated.people.push({...updated.people[0],id:'qa-advisor-profile',group:'advisor',name:'LOCAL QA ONLY',programIds:[],results:[]});
+version=(await call('/api/manage/content','PUT',{version,content:updated},owner)).result.version;
+version=(await call('/api/manage/publish','POST',{version},owner)).result.version;
+const profile=await fetch(base+'/anggota/pembina/qa-advisor-profile',{redirect:'manual'});
+check(profile.status===200 && (await profile.text()).includes('data-cms-person'),'new advisor profile works without rebuilding or redirecting to a template URL');
+check((await fetch(base+'/anggota/pembina/not-published',{redirect:'manual'})).status===404,'unknown private profiles return 404');
+const history=(await call('/api/manage/history','GET',undefined,owner)).result.items;
+const first=history.find((r:any)=>r.action==='save');check(Boolean(first),'version history records edits');
+const restored=await call('/api/manage/restore','POST',{version,revisionId:first.id},owner);check(restored.response.status===200,'owner restores a prior draft');
+check((await call('/api/content')).result.content.vision===c.vision,'restoring draft does not immediately change publication');
+check((await call('/api/manage/password','POST',{current:password,next:'Replacement local test password 2026.'},editor)).response.status===200,'password rotation succeeds');
+check((await call('/api/manage/content','GET',undefined,editor)).response.status===401,'password rotation revokes old sessions');
+check((await call('/api/manage/logout','POST',{},owner)).response.status===200,'logout revokes owner session');
+check((await call('/api/manage/content','GET',undefined,owner)).response.status===401,'logged out session is invalid');
+for(let i=0;i<11;i++)await call('/api/manage/login','POST',{username:'qa-unknown',password:'wrong'});
+check((await call('/api/manage/login','POST',{username:'qa-unknown',password:'wrong'})).response.status===429,'login attempts are rate limited');
+console.log(`PASS: ${cases.length} local CMS integration checks\n`+cases.map(c=>'  ✓ '+c).join('\n'));

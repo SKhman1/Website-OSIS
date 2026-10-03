@@ -12,3 +12,14 @@ dist-pages/
 data/*.db*
 *.log
 .DS_Store
+desktop-admin/.venv/
+desktop-admin/build/
+desktop-admin/dist/
+desktop-admin/dist-portable/
+desktop-admin/build-portable/
+desktop-admin/*.spec
+!desktop-admin/console.spec
+__pycache__/
+*.pyc
+data/cms-*.sql
+data/cms-*.png

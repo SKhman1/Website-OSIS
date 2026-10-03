@@ -1,0 +1,7 @@
+---
+import MemberProfile from '../../components/MemberProfile.astro';
+import { coreLeadership } from '../../content/site';
+const placeholder = {...coreLeadership[0], id: 'profil-template', role: 'Profil OSIS', name: null,
+  classLabel: '', introduction: 'Memuat profil yang telah diterbitkan.', programIds: [], results: []};
+---
+<MemberProfile person={placeholder} />

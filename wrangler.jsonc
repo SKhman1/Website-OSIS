@@ -2,5 +2,8 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "vnd-smkdipo1",
   "pages_build_output_dir": "./dist-pages",
-  "compatibility_date": "2026-10-02"
+  "compatibility_date": "2026-10-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {"CMS_ENABLED": "true"},
+  "d1_databases": [{"binding":"CMS_DB","database_name":"vnd-smkdipo1-content","database_id":"edc83161-162a-47c2-9893-aac1bfe5afb9","migrations_dir":"migrations/cms"}]
 }

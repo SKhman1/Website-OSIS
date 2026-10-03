@@ -48,7 +48,7 @@ WebP images for the public build. CSS frames the cabinet logo's transparent
 margin without changing its artwork. The primary orange is now `#ff9f43`;
 small orange text retains a darker shade for readable contrast.
 
-The homepage now has eight numbered sections with section 02 reserved for
+The homepage now has seven numbered sections with section 02 reserved for
 statistics. Demo numbers are visibly marked as examples. Set a statistic's
 `value` in `src/content/site.ts` only after verification; `null` retains the
 example label and preview value. Buttons have hover/press feedback, hero content
@@ -145,6 +145,10 @@ setup keeps the public site static and uses Pages Functions for the Google Forms
 submission bridge. Google Forms stores the responses; the old SQLite scaffold
 is not used by this flow.
 
+## Native desktop content management
+
+VND Console manages live people, photos, programs, results, events/rundowns, and visi/misi with password login. See [desktop setup and usage](desktop-admin/README.md) and [CMS architecture](CMS.md). The source-content instructions below describe the initial seed and static fallback; use the GUI to update the published D1 content.
+
 ## Seksi bidang content
 
 `src/content/site.ts` exports ten `departments` with stable IDs. Replace each
@@ -214,7 +218,7 @@ empty content, future activities, expired activities, and dismissed IDs stay
 hidden. Empty configuration produces no preview on page load. Optional `href`
 and `linkLabel` attach a normal activity link. Schedule boundaries use local
 timers and refresh on visibility changes; there is no polling or backend feed.
-New published content requires rebuilding/redeploying. Client code may call
+Managed activities are now supplied by the native CMS without rebuilding. Client code may call
 `notify()` only after an actual event, such as the API's confirmed form receipt.
 Success receipts take priority, then restore a still-active approved notice.
 
@@ -254,7 +258,7 @@ Edit `src/content/work.ts` for program descriptions, cadence, goals, and steps.
 Programs referenced by departments/profiles resolve from `allPrograms`.
 A result requires `id`, `title`, `description`, and an ISO `date`; optional
 `photo`/`photoAlt` can add approved documentation. Leave results empty until
-actual reports are supplied. Publication requires build and redeployment.
+actual reports are supplied. These files provide the initial seed/static fallback. Live publication now uses VND Console and D1 without rebuilding.
 
 
 ## School identity and hero

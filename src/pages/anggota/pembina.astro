@@ -14,7 +14,7 @@ import { site, advisors } from '../../content/site';
     </section>
     <section class="page-section" data-section="02" aria-labelledby="advisor-list-title">
       <header class="page-section-heading" data-motion="reveal"><SectionLabel number="02" label="Tim pembina" /><h2 id="advisor-list-title">Guru pembina OSIS.</h2><p class="roster-note">Daftar dan nama pembina akan dilengkapi setelah dikonfirmasi oleh sekolah. Foto yang ditampilkan masih berupa contoh.</p></header>
-      <div class="advisor-grid">{advisors.map((person, index) => <LeadershipCard person={person} delay={index % 4 * 60} />)}</div>
+      <div class="advisor-grid" data-cms-people="advisor">{advisors.map((person, index) => <LeadershipCard person={person} delay={index % 4 * 60} />)}</div>
     </section>
     <section class="page-section member-contact" data-section="03" data-motion="reveal" aria-labelledby="advisor-core-title"><div><SectionLabel number="03" label="Pengurus inti" /><h2 id="advisor-core-title">Empat peran, satu tim.</h2></div><a class="button" href="/anggota">Kenali pengurus inti <span aria-hidden="true">↗</span></a></section>
   </div>

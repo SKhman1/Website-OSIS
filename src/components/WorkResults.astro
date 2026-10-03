@@ -5,7 +5,10 @@ import type { WorkResult } from '../content/work';
 interface Props { results: WorkResult[]; }
 const { results } = Astro.props;
 ---
+<div data-cms-results>
 {results.length ? <div class="work-results-grid">{results.map(result => <article class="work-result" data-motion="reveal">
   {result.photo && (typeof result.photo === 'string' ? <img src={result.photo} alt={result.photoAlt ?? result.title} width="960" height="600" loading="lazy" decoding="async" /> : <Image src={result.photo} alt={result.photoAlt ?? result.title} width="960" height="600" format="webp" loading="lazy" />)}
   <div><time datetime={result.date}>{new Intl.DateTimeFormat('id-ID', {dateStyle: 'long', timeZone: 'Asia/Jakarta'}).format(new Date(result.date))}</time><h3>{result.title}</h3><p>{result.description}</p></div>
 </article>)}</div> : <EmptyState title="Cerita hasil kerja segera hadir" description="Dokumentasi dan hasil pelaksanaan akan ditampilkan setelah kegiatan berjalan dan laporannya tersedia." />}
+
+</div>

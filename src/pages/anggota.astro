@@ -10,7 +10,7 @@ import { site, coreLeadership } from '../content/site';
     <section class="page-heading" data-section="01" aria-labelledby="members-title"><div data-motion="hero"><SectionLabel number="01" label={`Pengurus inti · ${site.term}`} /></div><h1 id="members-title" data-motion="hero" data-delay="90">Empat peran.<br />Satu tim.</h1><p data-motion="hero" data-delay="180">Ketua, Wakil Ketua, Sekretaris, dan Bendahara {site.name}. Buka setiap profil untuk mengenal peran, program kerja, dan hasil kerjanya.</p></section>
     <section class="page-section" data-section="02" aria-labelledby="core-title">
       <header class="page-section-heading" data-motion="reveal"><SectionLabel number="02" label="Pengurus inti OSIS" /><h2 id="core-title">Kenali pengurus inti.</h2></header>
-      <div class="leadership-grid">{coreLeadership.map((person, index) => <LeadershipCard person={person} delay={index * 60} />)}</div>
+      <div class="leadership-grid" data-cms-people="core">{coreLeadership.map((person, index) => <LeadershipCard person={person} delay={index * 60} />)}</div>
     </section>
     <section class="page-section" data-section="03" aria-labelledby="organization-title">
       <header class="page-section-heading" data-motion="reveal"><SectionLabel number="03" label="Satu kepengurusan" /><h2 id="organization-title">Kenali peran lainnya.</h2></header>
