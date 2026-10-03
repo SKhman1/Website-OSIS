@@ -7,7 +7,7 @@ import SectionLabel from '../components/SectionLabel.astro';
 import Statistics from '../components/Statistics.astro';
 import DepartmentCard from '../components/DepartmentCard.astro';
 import LeadershipCard from '../components/LeadershipCard.astro';
-import { site, vision, missions, programs, activities, departments, advisors, coreLeadership } from '../content/site';
+import { site, vision, missions, activities, departments, advisors, coreLeadership } from '../content/site';
 const aspirationsOpen = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' && Boolean(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY);
 ---
 <Base>
@@ -68,18 +68,13 @@ const aspirationsOpen = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' &&
     </div>
   </section>
 
-  <section class="section container bordered-section" id="program" data-section="06" aria-labelledby="program-title">
-    <div class="section-heading" data-motion="reveal"><SectionLabel number="06" label="Rencana kerja" /><h2 id="program-title">Ide menjadi aksi.</h2></div>
-    <div class="section-body" data-motion="reveal" data-delay="100">{programs.length > 0 ? <div class="content-list">{programs.map(program => <article><span class="program-frequency">{program.frequency}</span><h3>{program.title}</h3><p>{program.description}</p></article>)}</div> : <EmptyState title="Program kerja segera hadir" description="Rencana kegiatan akan tersedia setelah disahkan oleh kepengurusan." />}<div class="program-profile-links"><p>Kenali program setiap pengurus.</p>{coreLeadership.map(person => <a class="text-link" href={`/anggota/${person.id}#program-kerja`}>{person.role} <span aria-hidden="true">↗</span></a>)}</div></div>
+  <section class="section container bordered-section" id="kegiatan" data-section="06" aria-labelledby="activity-title">
+    <div class="section-heading" data-motion="reveal"><SectionLabel number="06" label="Kabar dari OSIS" /><h2 id="activity-title">Agenda & rundown.</h2></div>
+    <div class="section-body" data-motion="reveal" data-delay="100">{activities.length > 0 ? <div class="content-list">{activities.map(activity => <article><time datetime={activity.date}>{new Intl.DateTimeFormat('id-ID', { dateStyle: 'long', timeZone: 'Asia/Jakarta' }).format(new Date(activity.date))}</time><h3>{activity.title}</h3><p>{activity.description}</p></article>)}</div> : <EmptyState title="Agenda kegiatan segera hadir" description="Jadwal dan rundown kegiatan OSIS akan dibagikan di sini setelah diumumkan." />}</div>
   </section>
 
-  <section class="section container bordered-section" id="kegiatan" data-section="07" aria-labelledby="activity-title">
-    <div class="section-heading" data-motion="reveal"><SectionLabel number="07" label="Kabar dari OSIS" /><h2 id="activity-title">Cerita & kegiatan.</h2></div>
-    <div class="section-body" data-motion="reveal" data-delay="100">{activities.length > 0 ? <div class="content-list">{activities.map(activity => <article><time datetime={activity.date}>{new Intl.DateTimeFormat('id-ID', { dateStyle: 'long', timeZone: 'Asia/Jakarta' }).format(new Date(activity.date))}</time><h3>{activity.title}</h3><p>{activity.description}</p></article>)}</div> : <EmptyState title="Cerita pertama sedang disiapkan" description="Agenda dan dokumentasi kegiatan OSIS akan dibagikan di sini." />}</div>
-  </section>
-
-  <section class="aspiration-banner container" data-section="08" data-motion="reveal" aria-labelledby="aspiration-title">
-    <div><SectionLabel number="08" label="Ruang aspirasi" /><h2 id="aspiration-title">Ada ide untuk Dipo?</h2><p>{aspirationsOpen ? 'Setiap masukan punya tempat. Sampaikan ide dan saranmu untuk sekolah dan OSIS.' : 'Setiap masukan punya tempat. Ruang aspirasi siswa segera hadir.'}</p></div>
+  <section class="aspiration-banner container" data-section="07" data-motion="reveal" aria-labelledby="aspiration-title">
+    <div><SectionLabel number="07" label="Ruang aspirasi" /><h2 id="aspiration-title">Ada ide untuk Dipo?</h2><p>{aspirationsOpen ? 'Setiap masukan punya tempat. Sampaikan ide dan saranmu untuk sekolah dan OSIS.' : 'Setiap masukan punya tempat. Ruang aspirasi siswa segera hadir.'}</p></div>
     <a class="button button-light" href="/aspirasi">{aspirationsOpen ? 'Sampaikan aspirasi' : 'Lihat ruang aspirasi'} <span aria-hidden="true">↗</span></a>
   </section>
 </Base>

@@ -227,6 +227,11 @@ supported. The skill guides timing and choreography; no Lottie runtime is loaded
 
 ## People, departments, and work
 
+The homepage has seven numbered sections. Section 6, **Kabar dari OSIS**, is the
+home for announced event agendas and future rundowns; section 7 is aspirations.
+Work programs appear within leadership profiles rather than a separate homepage
+section. No example event schedules are published as real activities.
+
 Core profile pages are `/anggota/ketua`, `/anggota/wakil-ketua`,
 `/anggota/sekretaris`, and `/anggota/bendahara`. Advisor profiles use
 `/anggota/pembina/[id]`, currently `/anggota/pembina/pembina-osis`.
