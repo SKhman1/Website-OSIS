@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import SectionLabel from '../../components/SectionLabel.astro';
+import ProfileHero from '../../components/ProfileHero.astro';
+import WorkProgramCard from '../../components/WorkProgramCard.astro';
+import WorkResults from '../../components/WorkResults.astro';
+import LeadershipCard from '../../components/LeadershipCard.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import { profiles, coreLeadership, site, type LeadershipMember } from '../../content/site';
+import { programsFor, mainProgramNote } from '../../content/work';
+export function getStaticPaths() {
+  return profiles.map(person => ({ params: { id: person.id }, props: { person } }));
+}
+interface Props { person: LeadershipMember; }
+const { person } = Astro.props;
+const work = programsFor(person.programIds);
+const peers = coreLeadership.filter(peer => peer.id !== person.id);
+---
+<Base title={`${person.name ?? person.role} · ${person.role}`} description={`Profil, program kerja, dan hasil kerja ${person.name ?? person.role}, ${person.role} OSIS ${site.school} periode ${site.term}.`}>
+  <div class="container page-content profile-page">
+    <nav class="profile-breadcrumb" aria-label="Lokasi halaman"><a href="/">Beranda</a><span aria-hidden="true">/</span><a href="/anggota">Pengurus</a><span aria-hidden="true">/</span><span aria-current="page">{person.role}</span></nav>
+    <ProfileHero title={person.name ?? person.role} label={`${person.role} · ${site.term}`} description={person.introduction} photo={person.photo} photoAlt={person.photoAlt} placeholder={person.photoIsPlaceholder} subtitle={person.classLabel} />
+    <nav class="profile-index" aria-label="Bagian profil"><a href="#program-kerja">Program kerja <span aria-hidden="true">↘</span></a><a href="#hasil-kerja">Hasil kerja <span aria-hidden="true">↘</span></a></nav>
+    <section class="page-section profile-section" id="program-kerja" data-section="02" aria-labelledby="profile-program-title">
+      <header class="page-section-heading" data-motion="reveal"><SectionLabel number="02" label="Rencana kerja" /><h2 id="profile-program-title">Dari rencana,<br />menjadi langkah.</h2><p class="roster-note">{person.id === 'ketua' || person.id === 'wakil-ketua' ? 'Program utama dijalankan bersama oleh Ketua dan Wakil Ketua.' : `Program kerja ${person.role.toLowerCase()} untuk periode ${site.term}.`}</p></header>
+      {work.length ? <div class="work-program-list">{work.map((program, index) => <WorkProgramCard program={program} index={index} />)}</div> : <EmptyState title="Program kerja belum tersedia" description="Rencana kerja akan melengkapi halaman ini setelah informasinya tersedia." />}
+      {(person.id === 'ketua' || person.id === 'wakil-ketua') && <p class="work-program-note">{mainProgramNote}</p>}
+    </section>
+    <section class="page-section profile-section" id="hasil-kerja" data-section="03" aria-labelledby="profile-results-title"><header class="page-section-heading" data-motion="reveal"><SectionLabel number="03" label="Hasil & dokumentasi" /><h2 id="profile-results-title">Langkah yang<br />sudah dijalankan.</h2></header><WorkResults results={person.results} /></section>
+    <section class="page-section" data-section="04" aria-labelledby="profile-peers-title"><header class="page-section-heading" data-motion="reveal"><SectionLabel number="04" label="Satu kepengurusan" /><h2 id="profile-peers-title">Kenali pengurus lainnya.</h2></header><div class:list={['leadership-grid', {'profile-peers-grid': peers.length === 3}]}>{peers.map(peer => <LeadershipCard person={peer} />)}</div></section>
+  </div>
+</Base>

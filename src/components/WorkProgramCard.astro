@@ -1,0 +1,20 @@
+---
+import type { WorkProgram } from '../content/work';
+interface Props { program: WorkProgram; index: number; }
+const { program, index } = Astro.props;
+---
+<article class="work-program" id={`program-${program.id}`} data-motion="reveal">
+  <span class="work-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+  <div class="work-program-body">
+    <div class="work-program-meta"><span class="program-frequency">{program.frequency}</span><span class="work-status">Rencana kerja</span></div>
+    <h3>{program.title}</h3>
+    <p>{program.description}</p>
+    <details class="work-details">
+      <summary>Rincian program <span class="sr-only">{program.title}</span><span aria-hidden="true">+</span></summary>
+      <div class="work-details-body">
+        <h4>Pelaksanaan</h4><ul>{program.details.map(item => <li>{item}</li>)}</ul>
+        <h4>Tujuan</h4><ul>{program.goals.map(item => <li>{item}</li>)}</ul>
+      </div>
+    </details>
+  </div>
+</article>

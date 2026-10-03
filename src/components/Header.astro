@@ -2,20 +2,21 @@
 import Brand from './Brand.astro';
 import { navigation } from '../content/site';
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const active = (href: string) => href === path || (!href.includes('#') && path.startsWith(`${href}/`));
 ---
 <header class="site-header boobnavbar">
   <div class="container header-inner">
     <Brand />
     <nav class="desktop-nav" aria-label="Navigasi utama">
       {navigation.map(({ href, label }) => (
-        <a href={href} aria-current={href === path ? 'page' : undefined}>{label}</a>
+        <a href={href} aria-current={active(href) ? (href === path ? 'page' : 'location') : undefined}>{label}</a>
       ))}
     </nav>
     <a class="button button-small header-aspirasi" href="/aspirasi" aria-current={path === '/aspirasi' ? 'page' : undefined}>Ruang aspirasi <span aria-hidden="true">↗</span></a>
     <details class="mobile-menu">
       <summary>Menu <span aria-hidden="true">+</span></summary>
       <nav aria-label="Navigasi seluler">
-        {navigation.map(({ href, label }) => <a href={href} aria-current={href === path ? 'page' : undefined}>{label}</a>)}
+        {navigation.map(({ href, label }) => <a href={href} aria-current={active(href) ? (href === path ? 'page' : 'location') : undefined}>{label}</a>)}
         <a href="/aspirasi">Ruang aspirasi</a>
       </nav>
     </details>

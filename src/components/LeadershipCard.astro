@@ -7,19 +7,19 @@ interface Props {
   headingLevel?: 'h3' | 'h4';
   delay?: number;
 }
-const { person, href, headingLevel = 'h3', delay = 0 } = Astro.props;
+const { person, href = `/anggota/${person.id}`, headingLevel = 'h3', delay = 0 } = Astro.props;
 const Tag = href ? 'a' : 'article';
 const Heading = headingLevel;
 const titleId = `${href ? 'preview-' : ''}${person.id}-title`;
 ---
-<Tag class:list={['department-card', 'leadership-card', 'fucknutcard', { 'department-preview-card': Boolean(href) }]} href={href} id={href ? undefined : person.id} aria-labelledby={titleId} data-leadership={person.id} data-motion="reveal" data-delay={delay}>
+<Tag class:list={['department-card', 'leadership-card', 'fucknutcard', { 'department-preview-card': Boolean(href) }]} href={href} id={person.id} aria-labelledby={titleId} aria-describedby={`${titleId}-name`} data-leadership={person.id} data-motion="reveal" data-delay={delay}>
   <div class:list={['department-photo', { 'department-photo-example': person.photoIsPlaceholder }]}>
     <Image src={person.photo} alt={person.photoAlt} width={person.photo.width} height={person.photo.height} format="webp" quality={85} loading="lazy" decoding="async" />
     {person.photoIsPlaceholder && <span class="department-example-label">Foto contoh · Purbaya</span>}
   </div>
   <div class="department-card-body">
     <Heading class="leadership-card-title" id={titleId}>{person.role}</Heading>
-    <p>{person.name ?? 'Nama akan diumumkan.'}</p>
+    <p id={`${titleId}-name`}>{person.name ?? 'Nama akan diumumkan.'}</p>
     {href && <span class="department-card-link">Kenali pengurus <span aria-hidden="true">↗</span></span>}
   </div>
 </Tag>

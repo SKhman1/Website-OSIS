@@ -83,3 +83,14 @@ Success, live, event, and information notices share one layout. Entry takes
 560ms, expansion 440ms, exit 220ms; animations use transform/opacity with a
 soft settling curve. Reduced motion skips these movements. Notices support
 keyboard dismissal, hover/focus timer pause, safe areas, and narrow screens.
+
+
+## Profile pages and program detail
+
+Named core profiles and each department have a static detail URL. Photo preview,
+breadcrumbs, numbered sections, orange cadence pills, and result documentation
+share one layout. Program explanations use native accessible disclosures with
+subtle transform/opacity entry. The main vision/mission appears on the homepage;
+individual and department pages focus on people, planned work, and real results.
+Plans never appear as completed work. Missing rosters/results use honest empty
+states. Source and cadence decisions are recorded in CONTENT-SOURCES.md.

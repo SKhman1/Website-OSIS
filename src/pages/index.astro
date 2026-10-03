@@ -53,11 +53,11 @@ const aspirationsOpen = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' &&
     </header>
     <div class="leadership-group" aria-labelledby="advisor-preview-heading">
       <div class="leadership-group-heading" data-motion="reveal"><h3 id="advisor-preview-heading">Guru pembina</h3><p>Mendampingi langkah OSIS.</p></div>
-      <div class="advisor-grid">{advisors.map(person => <LeadershipCard person={person} href={`/anggota#${person.id}`} headingLevel="h4" />)}</div>
+      <div class="advisor-grid">{advisors.map(person => <LeadershipCard person={person} href={`/anggota/${person.id}`} headingLevel="h4" />)}</div>
     </div>
     <div class="leadership-group" aria-labelledby="core-preview-heading">
       <div class="leadership-group-heading" data-motion="reveal"><h3 id="core-preview-heading">Pengurus inti OSIS</h3><p>Empat peran dalam satu tim.</p></div>
-      <div class="leadership-grid">{coreLeadership.map((person, index) => <LeadershipCard person={person} href={`/anggota#${person.id}`} headingLevel="h4" delay={index * 60} />)}</div>
+      <div class="leadership-grid">{coreLeadership.map((person, index) => <LeadershipCard person={person} href={`/anggota/${person.id}`} headingLevel="h4" delay={index * 60} />)}</div>
     </div>
     <div class="leadership-group" id="sekbid" aria-labelledby="department-preview-title">
       <div class="leadership-group-heading" data-motion="reveal"><div><h3 id="department-preview-title">Seksi bidang</h3><p>Sepuluh bidang, banyak ruang untuk berkarya.</p></div><a class="text-link" href="/sekbid">Kenali semua 10 bidang <span aria-hidden="true">↗</span></a></div>
@@ -67,7 +67,7 @@ const aspirationsOpen = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' &&
 
   <section class="section container bordered-section" id="program" data-section="06" aria-labelledby="program-title">
     <div class="section-heading" data-motion="reveal"><SectionLabel number="06" label="Rencana kerja" /><h2 id="program-title">Ide menjadi aksi.</h2></div>
-    <div class="section-body" data-motion="reveal" data-delay="100">{programs.length > 0 ? <div class="content-list">{programs.map(program => <article><h3>{program.title}</h3><p>{program.description}</p></article>)}</div> : <EmptyState title="Program kerja segera hadir" description="Rencana kegiatan akan tersedia setelah disahkan oleh kepengurusan." />}</div>
+    <div class="section-body" data-motion="reveal" data-delay="100">{programs.length > 0 ? <div class="content-list">{programs.map(program => <article><span class="program-frequency">{program.frequency}</span><h3>{program.title}</h3><p>{program.description}</p></article>)}</div> : <EmptyState title="Program kerja segera hadir" description="Rencana kegiatan akan tersedia setelah disahkan oleh kepengurusan." />}<div class="program-profile-links"><p>Kenali program setiap pengurus.</p>{coreLeadership.map(person => <a class="text-link" href={`/anggota/${person.id}#program-kerja`}>{person.role} <span aria-hidden="true">↗</span></a>)}</div></div>
   </section>
 
   <section class="section container bordered-section" id="kegiatan" data-section="07" aria-labelledby="activity-title">

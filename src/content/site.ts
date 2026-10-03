@@ -1,6 +1,7 @@
 import type { ImageMetadata } from 'astro';
 import purbayaPhoto from '../assets/placeholders/purbaya.png';
 import advisorPhoto from '../assets/placeholders/purbaya-advisor.png';
+import { mainPrograms, secretaryPrograms, treasurerPrograms, type WorkProgram, type WorkResult } from './work';
 
 export const site = {
   name: 'OSIS Dipo 1',
@@ -18,48 +19,51 @@ export const navigation = [
   { href: '/#kegiatan', label: 'Kegiatan' },
 ];
 
-export interface Member {
-  id: string;
-  name: string;
-  role: string;
-  department: string;
-  photo?: string;
-}
-
-// Publish only the approved 2026/2027 roster. Do not invent student identities.
-export const members: Member[] = [];
-
 export interface LeadershipMember {
   id: string;
   role: string;
   name: string | null;
+  classLabel?: string;
+  introduction: string;
   photo: ImageMetadata;
   photoAlt: string;
   photoIsPlaceholder: boolean;
+  programIds: string[];
+  results: WorkResult[];
 }
+export type Member = LeadershipMember;
+// Additional member profiles are added here when names and roles are supplied.
+export const members: Member[] = [];
 
 // The supplied Purbaya images demonstrate the layout, not real school staff.
 export const advisors: LeadershipMember[] = [{
-  id: 'pembina-osis',
-  role: 'Pembina OSIS',
-  name: null,
+  id: 'pembina-osis', role: 'Pembina OSIS', name: null,
+  introduction: 'Mendampingi pengurus dalam menjalankan kegiatan dan program kerja OSIS.',
   photo: advisorPhoto,
-  photoAlt: 'Purbaya sebagai gambar contoh untuk kartu pembina OSIS',
-  photoIsPlaceholder: true,
+  photoAlt: 'Purbaya sebagai gambar sementara untuk pembina OSIS',
+  photoIsPlaceholder: true, programIds: [], results: [],
 }];
 
+// Names come from the owner-supplied 2026/2027 program presentations.
 export const coreLeadership: LeadershipMember[] = [
-  { id: 'ketua', role: 'Ketua' },
-  { id: 'wakil-ketua', role: 'Wakil Ketua' },
-  { id: 'sekretaris', role: 'Sekretaris' },
-  { id: 'bendahara', role: 'Bendahara' },
+  { id: 'ketua', role: 'Ketua', name: 'Naufal Haris', classLabel: 'XI DKV',
+    introduction: 'Bersama Wakil Ketua, menjalankan lima program utama kepengurusan 2026/2027.',
+    programIds: mainPrograms.map(program => program.id) },
+  { id: 'wakil-ketua', role: 'Wakil Ketua', name: 'Alief Zemma A.', classLabel: 'X DKV',
+    introduction: 'Bersama Ketua, menjalankan program utama yang mendukung kebersihan, motivasi, evaluasi, dan apresiasi siswa.',
+    programIds: mainPrograms.map(program => program.id) },
+  { id: 'sekretaris', role: 'Sekretaris', name: 'Alinda Alazar',
+    introduction: 'Mengelola program mading, administrasi panitia, daftar piket, dan ruang permintaan lagu siswa.',
+    programIds: secretaryPrograms.map(program => program.id) },
+  { id: 'bendahara', role: 'Bendahara', name: 'Naurah Khansa Z.',
+    introduction: 'Mengelola rencana kas, iuran, laporan keuangan, dan kegiatan penggalangan dana OSIS.',
+    programIds: treasurerPrograms.map(program => program.id) },
 ].map(person => ({
-  ...person,
-  name: null,
-  photo: purbayaPhoto,
-  photoAlt: `Purbaya sebagai gambar contoh untuk peran ${person.role}`,
-  photoIsPlaceholder: true,
+  ...person, photo: purbayaPhoto,
+  photoAlt: `Purbaya sebagai gambar sementara untuk ${person.name}`,
+  photoIsPlaceholder: true, results: [],
 }));
+export const profiles = [...advisors, ...coreLeadership, ...members];
 
 export interface Department {
   id: string;
@@ -69,6 +73,9 @@ export interface Department {
   photo?: string | ImageMetadata;
   photoAlt?: string;
   photoIsPlaceholder?: boolean;
+  memberIds: string[];
+  programIds: string[];
+  results: WorkResult[];
 }
 
 // Names, responsibilities, and photos await the approved school content.
@@ -82,20 +89,17 @@ export const departments: Department[] = Array.from({ length: 10 }, (_, index) =
     photo: purbayaPhoto,
     photoAlt: `Purbaya sebagai foto contoh untuk Seksi Bidang ${number}`,
     photoIsPlaceholder: true,
+    memberIds: [], programIds: [], results: [],
   };
 });
-// User-supplied presentation: slide 2 (vision), slide 3 (mission).
+// Main Ketua/Wakil presentation, slide 2. Render vision/mission on the homepage only.
 export const vision: string | null = 'Mewujudkan Sekolah Sehat, Menginspirasi, dan Mengapresiasi';
 export const missions: string[] = [
   'Mengembangkan potensi siswa lewat wadah minat & bakat yang aktif',
 ];
 
-export interface Program {
-  id: string;
-  title: string;
-  description: string;
-}
-export const programs: Program[] = [];
+export type Program = WorkProgram;
+export const programs: Program[] = mainPrograms;
 
 export interface Activity {
   id: string;

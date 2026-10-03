@@ -3,12 +3,12 @@ import type { Department } from '../content/site';
 import { Image } from 'astro:assets';
 interface Props { department: Department; preview?: boolean; delay?: number; headingLevel?: 'h3' | 'h4'; }
 const { department, preview = false, delay = 0, headingLevel = 'h3' } = Astro.props;
-const Tag = preview ? 'a' : 'article';
+const Tag = 'a';
 const Heading = headingLevel;
 ---
 <Tag
-  class:list={['department-card', 'fucknutcard', { 'department-preview-card': preview }]}
-  href={preview ? `/sekbid#${department.id}` : undefined}
+  class:list={['department-card', 'fucknutcard', { 'department-preview-card': true }]}
+  href={`/sekbid/${department.id}`}
   id={preview ? undefined : department.id}
   aria-labelledby={`${preview ? 'preview-' : ''}${department.id}-title`}
   data-motion="reveal"
@@ -35,6 +35,6 @@ const Heading = headingLevel;
   <div class="department-card-body">
     <Heading id={`${preview ? 'preview-' : ''}${department.id}-title`}>{department.name}</Heading>
     <p>{department.description}</p>
-    {preview && <span class="department-card-link">Lihat bidang <span aria-hidden="true">↗</span></span>}
+    <span class="department-card-link">Lihat bidang <span aria-hidden="true">↗</span></span>
   </div>
 </Tag>

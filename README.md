@@ -37,9 +37,11 @@ server. Do not use `astro preview` as a production server.
 - `src/server/routes/aspirasi.ts`: local Node API route injected by the Astro config.
 - `functions/api/aspirasi.ts`: Cloudflare Pages API using the shared response handler.
 
-The supplied presentation provides the vision on slide 2 and the single mission
-on slide 3; these are reproduced in `src/content/site.ts`. The roster, official
-department names, and descriptions still show explicit empty states/stubs.
+The supplied Ketua/Wakil presentation provides the main vision and mission on
+slide 2, shown on the homepage only. Four named core profiles and 12 distinct
+program plans come from the three supplied presentations. Department names,
+additional member rosters, and completed results remain empty until supplied.
+`CONTENT-SOURCES.md` records the source mapping and owner cadence correction.
 The supplied OSIS and 2026/2027 cabinet logos appear together in the navbar and
 footer. `src/assets/` preserves the original PNG files; Astro emits optimized
 WebP images for the public build. CSS frames the cabinet logo's transparent
@@ -201,3 +203,22 @@ priority and restore the active notice afterwards. Other site code can import
 Motion animates transform/opacity, supports interruption and reduced-motion
 preferences, and hides the capsule while the mobile menu is open or when it
 would obstruct a focused control. Student messages never appear in the island.
+
+
+## People, departments, and work
+
+Core profile pages are `/anggota/ketua`, `/anggota/wakil-ketua`,
+`/anggota/sekretaris`, and `/anggota/bendahara`. The teacher has a prepared page
+at `/anggota/pembina-osis`. Each of the ten departments has a page at
+`/sekbid/sekbid-01` through `/sekbid/sekbid-10`. Directory/home cards link to
+these static pages, with shared photo previews, numbered sections, program
+details, and a results area. Detail pages keep the shared notification island.
+
+Edit `src/content/site.ts` for identities, introductions, department `memberIds`,
+`programIds`, and `results`. Add additional named member profiles to `members`;
+the member route generates their pages automatically. Keep stable unique IDs.
+Edit `src/content/work.ts` for program descriptions, cadence, goals, and steps.
+Programs referenced by departments/profiles resolve from `allPrograms`.
+A result requires `id`, `title`, `description`, and an ISO `date`; optional
+`photo`/`photoAlt` can add approved documentation. Leave results empty until
+actual reports are supplied. Publication requires build and redeployment.

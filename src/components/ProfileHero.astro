@@ -1,0 +1,23 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import SectionLabel from './SectionLabel.astro';
+interface Props {
+  title: string; label: string; description: string;
+  photo: ImageMetadata | string; photoAlt: string; placeholder?: boolean;
+  subtitle?: string;
+}
+const { title, label, description, photo, photoAlt, placeholder = true, subtitle } = Astro.props;
+---
+<section class="profile-hero" data-section="01" aria-labelledby="profile-title">
+  <div class="profile-hero-copy" data-motion="hero">
+    <SectionLabel number="01" label={label} />
+    <h1 id="profile-title">{title}</h1>
+    {subtitle && <p class="profile-subtitle">{subtitle}</p>}
+    <p class="profile-introduction">{description}</p>
+  </div>
+  <figure class="profile-photo" data-motion="hero" data-delay="100">
+    {typeof photo === 'string' ? <img src={photo} alt={photoAlt} width="960" height="720" loading="eager" fetchpriority="high" decoding="async" /> : <Image src={photo} alt={photoAlt} width={photo.width} height={photo.height} widths={[400, 666]} sizes="(max-width: 760px) 90vw, 42vw" format="webp" quality={85} loading="eager" fetchpriority="high" />}
+    {placeholder && <figcaption>Foto sementara · Purbaya</figcaption>}
+  </figure>
+</section>
