@@ -5,11 +5,12 @@ export interface Announcement {
   message: string;
   href?: string;
   linkLabel?: string;
-  startsAt?: string;
-  endsAt?: string;
+  startsAt: string;
+  endsAt: string;
 }
 
 // Add only approved announcements. Empty means no public island on page load.
+// Every public notice requires startsAt and endsAt; outside that window it is hidden.
 // Use ISO dates with +07:00 for Jakarta. Scheduling is checked in the browser.
 // Example (leave disabled until real details are approved):
 // { id: 'approved-event', kind: 'live', title: 'Actual event title',

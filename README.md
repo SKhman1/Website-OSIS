@@ -183,32 +183,43 @@ untrusted code. DevTools remains available and real diagnostic logs still work.
 ## Notification island
 
 `src/components/NotificationIsland.astro` and `src/scripts/notifications.ts`
-provide a compact capsule inside the sticky navbar on every page. Long previews
-scroll rightwards with a seamless duplicate that is hidden from screen readers.
-Click opens a fluid detail card anchored to the capsule. On narrow screens, the
-capsule occupies a second row inside the same navbar. Escape or clicking outside
-collapses the card; Close dismisses it. The menu stays available while notices show.
+render nothing until a real client event or approved active announcement exists.
+The desktop capsule occupies only the spare slot between the school identity and
+navigation. Navigation and the aspiration button remain visible and usable.
+If that slot is narrow, the capsule becomes an accessible icon trigger. On mobile,
+only an active notification adds a compact second row inside the sticky navbar.
+There is no empty capsule, placeholder notice, or automatic welcome message.
 
-Confirmed aspiration receipts remain for at least 12 seconds, extended to cover
-a complete text loop. Hover, keyboard focus, and a hidden browser tab pause the
-timer and scrolling. Expanded receipts stay open until collapsed or dismissed.
-The inline form receipt remains available afterwards. Student messages never
-appear in notifications.
+Long previews scroll rightwards with a seamless, aria-hidden second copy. Hover,
+keyboard focus, a hidden tab, and open details pause the ticker and receipt timer.
+Reduced motion disables scrolling. Confirmed receipts persist for at least 12
+seconds, extended to cover one text loop; the inline form receipt remains after
+preview dismissal. Notifications never include student response content.
 
-Add approved notices to `src/content/announcements.ts` with a unique `id`,
-`kind` (`live`, `event`, or `info`), `title`, and `message`. Optional `href`
-and `linkLabel` provide a normal link; `startsAt`/`endsAt` use ISO timestamps
-with a Jakarta offset (`+07:00`). Empty configuration renders no notification.
-The browser checks schedule boundaries once a minute without network polling.
-New content requires rebuilding/redeploying. Approved notices start compact and
-stay until dismissed or their schedule ends. Dismissed IDs last for that browser
-tab session. Success receipts take priority and restore the active notice later.
-Other site code can import `notify()` to use the same component.
+Click opens one shared native dialog: a white anchored popover below the desktop
+navbar, or a white bottom sheet with a dim backdrop on mobile. Desktop navigation
+remains interactive; mobile uses native modal focus containment and scroll lock.
+Close, Escape, outside click, or a downward swipe on the sheet handle closes
+only the details. Focus returns to the preview unless another control was chosen.
+The preview's dismiss button hides the notification. The handle also works as a
+normal button, so gestures are never required. Modal mode adapts during resize.
 
-Motion uses transform/opacity and supports interruption. Reduced motion disables
-morphing and scrolling, with full text still available in the expanded card.
-Opening the navigation menu hides the capsule; moving keyboard focus to an
-obstructed control collapses the detail card.
+Add only real approved activities to `src/content/announcements.ts`, with unique
+`id`, `kind` (`live`, `event`, or `info`), `title`, `message`, and REQUIRED ISO
+`startsAt` / `endsAt` timestamps, using `+07:00` for Jakarta. Undated banners,
+empty content, future activities, expired activities, and dismissed IDs stay
+hidden. Empty configuration produces no preview on page load. Optional `href`
+and `linkLabel` attach a normal activity link. Schedule boundaries use local
+timers and refresh on visibility changes; there is no polling or backend feed.
+New published content requires rebuilding/redeploying. Client code may call
+`notify()` only after an actual event, such as the API's confirmed form receipt.
+Success receipts take priority, then restore a still-active approved notice.
+
+Motion follows the LottieFiles Motion Design skill with CSS/Web Animations API:
+preview entry 240ms, desktop detail entry 320ms, sheet entry 360ms, and detail
+exit 220ms. Content follows by 60ms, and icon feedback settles independently.
+Only transform/opacity animate. Interrupted opens/closes and reduced motion are
+supported. The skill guides timing and choreography; no Lottie runtime is loaded.
 
 
 ## People, departments, and work

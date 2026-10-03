@@ -76,16 +76,28 @@ blocked context menus, or suppressed logs.
 
 ## Notification island
 
-One dark capsule sits inside the sticky white navbar. Desktop replaces the
-inline navigation with the capsule and keeps a menu trigger; mobile places the
-capsule on a second navbar row. Orange marks status and icon. Long compact text
-scrolls right; clicking morphs the capsule into a detail card at the same anchor.
-It remains hidden without a confirmed receipt or approved announcement.
-Success, live, event, and information notices share one layout. Entry takes
-560ms, expansion 500ms, exit 220ms; transform/opacity provides soft settling.
-Reduced motion disables morphing and scrolling. Escape/click outside collapses;
-Close dismisses. Hover/focus pauses scrolling and timers. Keyboard navigation,
-narrow screens, safe areas, and the open navigation menu remain supported.
+A dark capsule appears only for a real client event or approved activity within
+its finite start/end window. Empty configuration leaves the navbar untouched.
+Desktop keeps the full school identity, all navigation links, and the aspiration
+button. The capsule uses the spare slot between identity and navigation; a narrow
+slot switches to an accessible icon. Active mobile notices add a second navbar
+row. No automatic static message or permanent preview placeholder appears.
+
+The compact preview scrolls rightwards only if its text overflows. Hover/focus
+pauses it; reduced motion uses ellipsis with readable detail on click. Desktop
+opens a white card below the navbar, aligned to the trigger and clamped to the
+viewport. Mobile opens a white modal bottom sheet, with rounded corners, handle,
+dim backdrop, readable title/message, and an optional orange activity button.
+Sheets fit content up to 75dvh and scroll internally. Swipe is limited to the
+handle; buttons and Escape remain available. Closing returns to the preview.
+
+Timing follows the official LottieFiles Motion Design skill: calm corporate
+character, `cubic-bezier(.2, 0, 0, 1)` entrances, `.3, 0, 1, 1` exits; preview
+240ms, desktop card 320ms, mobile sheet 360ms, close 220ms. Content follows by
+60ms with a subtle 8px reveal. Reduced motion replaces movement with an 80ms fade.
+Native dialog controls focus/inert state on mobile; desktop leaves menus usable.
+Animation uses transform/opacity and responds to interrupted inputs and resize.
+Source: https://github.com/LottieFiles/motion-design-skill/tree/main/skills/motion-design
 
 ## School-photo hero
 

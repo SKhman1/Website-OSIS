@@ -2,20 +2,33 @@
 import { announcements } from '../content/announcements';
 ---
 <div class="notification-island" data-notification-island data-announcements={JSON.stringify(announcements)} hidden>
-  <section class="island-shell" data-island-shell data-expanded="false" aria-label="Notifikasi OSIS">
-    <span class="island-icon" data-island-icon aria-hidden="true"></span>
-    <button class="island-toggle" data-island-toggle type="button" aria-expanded="false" aria-controls="island-detail">
-      <span class="island-eyebrow" data-island-label></span>
+  <section class="island-shell" data-island-shell aria-label="Notifikasi OSIS">
+    <button class="island-toggle" data-island-toggle type="button" aria-expanded="false" aria-haspopup="dialog" aria-controls="island-detail">
+      <span class="island-icon" data-island-icon aria-hidden="true"></span>
       <span class="island-text-window" data-island-window><span class="island-track" data-island-track><span class="island-title" data-island-title></span><span class="island-copy" data-island-copy aria-hidden="true" hidden></span></span></span>
     </button>
-    <button class="island-close" data-island-close type="button" aria-label="Tutup notifikasi">
+    <button class="island-close" data-island-dismiss type="button" aria-label="Sembunyikan notifikasi">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
     </button>
-    <div class="island-detail" id="island-detail" data-island-detail hidden>
-      <p data-island-message></p>
-      <a class="island-link" data-island-link hidden>Lihat kegiatan <span aria-hidden="true">↗</span></a>
-    </div>
   </section>
+  <dialog class="notification-panel" id="island-detail" data-island-panel aria-labelledby="island-detail-title" aria-describedby="island-detail-message">
+    <button class="notification-handle" data-island-handle type="button" aria-label="Tutup detail notifikasi"><span aria-hidden="true"></span></button>
+    <div class="notification-panel-heading">
+      <span class="notification-panel-icon" data-island-panel-icon aria-hidden="true"></span>
+      <button class="notification-panel-close" data-island-close type="button" aria-label="Tutup detail notifikasi" autofocus>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
+    <div class="notification-panel-body" data-island-body>
+      <p class="notification-panel-label" data-island-label></p>
+      <h2 id="island-detail-title" data-island-detail-title></h2>
+      <p class="notification-panel-message" id="island-detail-message" data-island-message></p>
+      <div class="notification-panel-actions">
+        <a class="button button-small" data-island-link hidden>Lihat kegiatan <span aria-hidden="true">↗</span></a>
+        <button class="notification-panel-done" data-island-done type="button">Tutup detail</button>
+      </div>
+    </div>
+  </dialog>
 </div>
 <p class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-island-announcer></p>
 <script>
