@@ -8,14 +8,15 @@ import threading
 import time
 from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QPushButton
 from PIL import Image
 from client import Client
 from importers import import_rundown, prepare_photo
 from main import Window, Editor, STYLE
 from provision import encode_password
 from gui_async import start_job
-from PySide6.QtCore import QEventLoop, QTimer
+from PySide6.QtCore import QEventLoop, QTimer, Qt
+from references import ReferencePicker
 
 class Tests(unittest.TestCase):
     @classmethod
@@ -78,6 +79,33 @@ class Tests(unittest.TestCase):
         self.assertEqual(window.content['identity']['cabinetName'],'Angkatan Baru')
         self.assertEqual(window.content['statistics'],dict(members=0,programs=17,activities=None))
         self.assertEqual(window.content['people'],self.seed['people']); window.dirty=window.form_dirty=False; window.close()
+    def test_field_name_pickers_separate_chair_and_members_and_keep_program_refs(self):
+        content=copy.deepcopy(self.seed)
+        content['people'].extend([{**copy.deepcopy(content['people'][1]),'id':'chair-1','group':'member','name':'MOCHAMAD GILANG'},{**copy.deepcopy(content['people'][1]),'id':'member-1','group':'member','name':'MUHAMMAD RIFKI ANGGARA'}])
+        item=content['departments'][0];item.update(chairId='chair-1',memberIds=['member-1'],programIds=[content['programs'][0]['id']])
+        editor=Editor('departments',item,lambda *_:None,content=content)
+        self.assertEqual(editor.value(),item)
+        chair=editor.fields['chairId'][0];members=editor.fields['memberIds'][0]
+        self.assertIn('MOCHAMAD GILANG',chair.control.currentText())
+        self.assertFalse(any(members.control.item(i).data(Qt.ItemDataRole.UserRole)=='chair-1' for i in range(members.control.count())))
+        chair.control.setCurrentIndex(chair.control.findData('member-1'))
+        self.assertEqual(editor.value()['chairId'],'member-1');self.assertEqual(editor.value()['memberIds'],[])
+        self.assertEqual(editor.value()['programIds'],item['programIds'])
+    def test_add_chair_member_and_program_inline_creates_valid_references(self):
+        window=Window(self.root);window.client=Client('https://example.com');window.client.user={'username':'qa','role':'owner'}
+        window.loaded({'content':copy.deepcopy(self.seed),'version':0,'publishedVersion':0});window.navigate(2)
+        for key,text in [('chairId','MOCHAMAD GILANG'),('memberIds','MUHAMMAD RIFKI ANGGARA'),('programIds','Amal Qurban Idul Adha')]:
+            def fill(key=key,text=text):
+                dialog=QApplication.activeModalWidget();form=dialog.findChild(Editor)
+                form.fields['title' if key=='programIds' else 'name'][0].setText(text)
+                next(b for b in dialog.findChildren(QPushButton) if b.text()=='Gunakan dalam draft').click()
+            QTimer.singleShot(0,fill);window.editor.fields[key][0].open_editor(None)
+        window.apply_form();d=window.content['departments'][0]
+        self.assertEqual(next(p['name'] for p in window.content['people'] if p['id']==d['chairId']),'MOCHAMAD GILANG')
+        self.assertEqual(next(p['name'] for p in window.content['people'] if p['id']==d['memberIds'][0]),'MUHAMMAD RIFKI ANGGARA')
+        self.assertNotIn(d['chairId'],d['memberIds'])
+        program=next(p for p in window.content['programs'] if p['id']==d['programIds'][0]);self.assertEqual(program['title'],'Amal Qurban Idul Adha');self.assertEqual(program['description'],program['title'])
+        window.dirty=window.form_dirty=False;window.close()
     def test_worker_success_and_failure_arrive_on_gui_thread(self):
         window = Window(self.root); gui_thread = threading.get_ident()
         for raises in (False, True):

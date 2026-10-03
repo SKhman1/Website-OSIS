@@ -3,6 +3,7 @@ import argparse
 import copy
 import json
 import re
+import uuid
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +16,7 @@ from client import Client, ApiError
 from importers import import_rundown, prepare_photo
 from provision import provision_account
 from gui_async import start_job
+from references import ReferencePicker
 
 BASE_URL = "https://vnd-smkdipo1.pages.dev"
 STYLE = """
@@ -101,8 +103,8 @@ class RowsEditor(QWidget):
 FIELDS = {
     "settings": [("cabinetName", "Nama angkatan OSIS", "text"), ("term", "Tahun ajaran (contoh: 2026/2027)", "text"), ("logo", "Logo angkatan (logo OSIS resmi tetap)", "photo"), ("logoAlt", "Deskripsi logo", "text")],
     "statistics": [("members", "Jumlah anggota OSIS", "count"), ("programs", "Jumlah program kerja", "count"), ("activities", "Jumlah kegiatan", "count")],
-    "people": [("id", "ID profil", "id"), ("group", "Kelompok", "group"), ("role", "Peran", "text"), ("name", "Nama", "nullable"), ("classLabel", "Kelas", "text"), ("introduction", "Perkenalan", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("programIds", "Program kerja (satu ID per baris)", "lines"), ("results", "Hasil kerja", "results")],
-    "departments": [("id", "ID bidang", "id"), ("number", "Nomor bidang", "text"), ("name", "Nama bidang", "text"), ("description", "Deskripsi", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("memberIds", "Anggota (satu ID profil per baris)", "lines"), ("programIds", "Program kerja (satu ID per baris)", "lines"), ("results", "Hasil kerja", "results")],
+    "people": [("id", "ID profil", "id"), ("group", "Kelompok", "group"), ("role", "Peran", "text"), ("name", "Nama", "nullable"), ("classLabel", "Kelas", "text"), ("introduction", "Perkenalan", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("programIds", "Program kerja", "program_refs"), ("results", "Hasil kerja", "results")],
+    "departments": [("id", "ID bidang", "id"), ("number", "Nomor bidang", "text"), ("name", "Nama bidang", "text"), ("description", "Deskripsi", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("chairId", "Ketua seksi bidang", "chair_ref"), ("memberIds", "Anggota seksi bidang", "member_refs"), ("programIds", "Program kerja", "program_refs"), ("results", "Hasil kerja", "results")],
     "programs": [("id", "ID program", "id"), ("title", "Judul", "text"), ("frequency", "Frekuensi", "text"), ("description", "Deskripsi", "long"), ("details", "Pelaksanaan (satu langkah per baris)", "lines"), ("goals", "Tujuan (satu tujuan per baris)", "lines")],
     "events": [("id", "ID acara", "id"), ("title", "Nama acara", "text"), ("description", "Deskripsi", "long"), ("date", "Tanggal (YYYY-MM-DD)", "text"), ("location", "Lokasi acara", "text"), ("start", "Mulai (HH:MM WIB)", "text"), ("end", "Selesai (HH:MM WIB)", "text"), ("notify", "Notifikasi selama acara berlangsung", "bool"), ("rundown", "Rundown", "rundown")],
     "identity": [("vision", "Visi", "long"), ("missions", "Misi (satu poin per baris)", "lines")],
@@ -110,18 +112,23 @@ FIELDS = {
 
 class Editor(QWidget):
     changed = Signal()
-    def __init__(self, kind, data, upload, existing=True, preview_photo=None):
+    def __init__(self, kind, data, upload, existing=True, preview_photo=None, content=None, edit_reference=None):
         super().__init__(); self.kind = kind; self.original = copy.deepcopy(data); self.fields = {}
         layout = QFormLayout(self); layout.setSpacing(15); layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
         for key, caption, mode in FIELDS[kind]:
             value = data.get(key)
+            if mode in ("chair_ref", "member_refs", "program_refs"):
+                if content is not None:
+                    widget = ReferencePicker("programs" if mode == "program_refs" else "people", value, content, edit_reference, mode == "chair_ref")
+                    widget.changed.connect(self.changed.emit); self.fields[key] = (widget, mode); layout.addRow(caption, widget); continue
+                mode = "nullable" if mode == "chair_ref" else "lines"
             if mode in ("long", "lines"):
                 widget = QPlainTextEdit("\n".join(value or []) if mode == "lines" else str(value or "")); widget.setMinimumHeight(90); widget.setMaximumHeight(160); widget.textChanged.connect(self.changed.emit)
             elif mode == "bool":
-                widget = QCheckBox(); widget.setChecked(bool(value)); widget.toggled.connect(self.changed.emit)
+                widget = QCheckBox(); widget.setChecked(bool(value)); widget.toggled.connect(lambda _checked:self.changed.emit())
             elif mode == "group":
-                widget = QComboBox(); widget.addItems(["core", "advisor", "member"]); widget.setCurrentText(value or "member"); widget.setEnabled(not existing); widget.currentTextChanged.connect(self.changed.emit)
+                widget = QComboBox(); widget.addItems(["core", "advisor", "member"]); widget.setCurrentText(value or "member"); widget.setEnabled(not existing); widget.currentTextChanged.connect(lambda _text:self.changed.emit())
             elif mode in ("rundown", "results"):
                 columns = [("start", "Mulai"), ("end", "Selesai"), ("agenda", "Agenda"), ("location", "Lokasi")] if mode == "rundown" else [("id", "ID hasil"), ("title", "Judul"), ("description", "Deskripsi"), ("date", "Tanggal"), ("photo", "Foto (opsional)"), ("photoAlt", "Deskripsi foto")]
                 widget = RowsEditor(columns, value or []); widget.changed.connect(self.changed.emit)
@@ -137,10 +144,20 @@ class Editor(QWidget):
                 layout.addRow(caption, container)
                 if preview_photo: layout.addRow("", button("Preview foto", lambda checked=False, w=widget: preview_photo(w.text())))
             else: layout.addRow(caption, widget)
+        if kind == "departments" and content is not None:
+            self.fields["chairId"][0].changed.connect(self.sync_chair)
+            self.sync_chair()
         if kind == "events":
             layout.addRow("", button("Import rundown Excel / CSV…", self.import_rows))
         if kind in ("people", "departments"):
             layout.addRow("", button("Foto untuk hasil kerja terpilih…", lambda: self.upload_result(upload)))
+    def sync_chair(self):
+        chair=self.fields["chairId"][0].values()
+        self.fields["memberIds"][0].set_excluded([chair] if chair else [])
+    def refresh_references(self):
+        for widget, mode in self.fields.values():
+            if mode in ("chair_ref", "member_refs", "program_refs"): widget.refresh()
+        if self.kind == "departments": self.sync_chair()
     def upload_result(self, upload):
         table = self.fields["results"][0].table
         if table.currentRow() < 0:
@@ -168,7 +185,7 @@ class Editor(QWidget):
     def value(self):
         data = copy.deepcopy(self.original)
         for key, (widget, mode) in self.fields.items():
-            if mode in ("rundown", "results"): value = widget.values()
+            if mode in ("rundown", "results", "chair_ref", "member_refs", "program_refs"): value = widget.values()
             elif mode == "bool": value = widget.isChecked()
             elif mode == "group": value = widget.currentText()
             elif mode in ("long", "lines"):
@@ -321,7 +338,34 @@ class Window(QMainWindow):
         self.apply_form(); self.index = row
         if row >= 0 and self.content and self.kind not in ("identity", "settings", "statistics"): self.show_editor(self.content[self.kind][row])
     def show_editor(self, item, existing=True):
-        self.editor = Editor(self.kind, item, self.upload, existing, self.preview_photo); self.editor.changed.connect(self.mark_dirty); self.scroll.setWidget(self.editor)
+        self.editor = Editor(self.kind, item, self.upload, existing, self.preview_photo, self.content, self.edit_reference); self.editor.changed.connect(self.mark_dirty); self.scroll.setWidget(self.editor)
+    def edit_reference(self, collection, identifier, done, is_chair=False):
+        self.apply_form()
+        existing=next((item for item in self.content[collection] if item["id"]==identifier),None)
+        number=self.editor.original.get("number", "") if self.editor else ""
+        if existing: item=copy.deepcopy(existing)
+        elif collection=="people":
+            sample=next((p for p in self.content["people"] if p["id"]=="ketua"),self.content["people"][0])
+            role=("Ketua" if is_chair else "Anggota") + (f" Seksi Bidang {number}" if number else " Seksi Bidang")
+            item=copy.deepcopy(sample);item.update(id="anggota-"+uuid.uuid4().hex[:12],group="member",role=role,name=None,classLabel="",introduction=role+" OSIS SMK Diponegoro 01.",programIds=[],results=[])
+        else: item=dict(id="program-"+uuid.uuid4().hex[:12],title="",description="",frequency="Belum ditetapkan",details=[],goals=[])
+        dialog=QDialog(self);dialog.setWindowTitle("Profil seksi bidang" if collection=="people" else "Program kerja");dialog.resize(740,700)
+        layout=QVBoxLayout(dialog);view=QScrollArea();view.setWidgetResizable(True)
+        form=Editor(collection,item,self.upload,True,self.preview_photo,self.content,self.edit_reference);view.setWidget(form);layout.addWidget(view)
+        if collection=="people": form.fields["group"][0].setEnabled(False)
+        actions=QHBoxLayout();actions.addWidget(button("Batal",dialog.reject))
+        def accept():
+            value=form.value()
+            if not (value.get("name") if collection=="people" else value.get("title")):
+                message(dialog,"Lengkapi nama","Isi nama anggota atau judul program terlebih dahulu.");return
+            if collection=="programs" and not value["description"]:value["description"]=value["title"]
+            if existing:
+                index=next(i for i,p in enumerate(self.content[collection]) if p["id"]==identifier);self.content[collection][index]=value
+            else:self.content[collection].append(value)
+            self.dirty=True;dialog.accept()
+            if self.editor:self.editor.refresh_references()
+            done(value["id"]);self.mark_dirty()
+        actions.addWidget(button("Gunakan dalam draft",accept,True));layout.addLayout(actions);dialog.exec()
     def mark_dirty(self):
         self.form_dirty = True; self.status.setText("Ada perubahan lokal · belum disimpan ke server")
     def add_item(self):
@@ -357,7 +401,9 @@ class Window(QMainWindow):
             return output
         for item in self.content["people"]: lines.extend([f"{item['role']} · {item['name'] or 'Nama akan diumumkan'}", item['introduction'], f"Foto: {item['photo']}", "Program: " + ", ".join(item['programIds']), *result_lines(item['results']), ""])
         lines.append("SEKSI BIDANG")
-        for item in self.content["departments"]: lines.extend([item['name'], item['description'], "Anggota: " + ", ".join(item['memberIds']), "Program: " + ", ".join(item['programIds']), *result_lines(item['results']), ""])
+        people={p["id"]:p for p in self.content["people"]}; programs={p["id"]:p for p in self.content["programs"]}
+        def member_name(key): return (people.get(key,{}).get("name") or "Belum dipilih") if key else "Belum dipilih"
+        for item in self.content["departments"]: lines.extend([item['name'], item['description'], "Ketua: " + member_name(item.get('chairId')), "Anggota: " + ", ".join(member_name(key) for key in item['memberIds']), "Program: " + ", ".join(programs.get(key,{}).get('title', 'Program tidak ditemukan') for key in item['programIds']), *result_lines(item['results']), ""])
         lines.append("PROGRAM KERJA")
         for item in self.content["programs"]: lines.extend([f"{item['title']} · {item['frequency']}", item['description'], *item['details'], *item['goals'], ""])
         lines.append("KEGIATAN")

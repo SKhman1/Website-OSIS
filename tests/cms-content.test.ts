@@ -46,3 +46,11 @@ test('identity and statistics validate boundaries and include cabinet logo in pu
   assert.equal(validateContent(c).statistics.members,0);assert.ok(contentPhotos(validateContent(c)).has(c.identity.logo));
   for(const mutate of [c=>{c.identity.term='2026/2028';},c=>{c.identity.logo='https://evil.test/logo.svg';},c=>{c.statistics.members=-1;},c=>{c.statistics.programs=1.5;},c=>{c.statistics.activities='2';},c=>{delete c.identity;},c=>{c.identity.secret='no';}] as ((c:any)=>void)[]){const bad=structuredClone(c);mutate(bad);assert.throws(()=>validateContent(bad));}
 });
+
+test('field chair and members stay separate, accept legacy fields, reject invalid roles and duplicates',()=>{
+  const c=structuredClone(seed);c.people.push({...c.people[0],id:'chair-1',group:'member',name:'Ketua Bidang'}, {...c.people[0],id:'member-1',group:'member',name:'Anggota Bidang'});
+  c.departments[0].chairId='chair-1';c.departments[0].memberIds=['member-1'];assert.equal(validateContent(c).departments[0].chairId,'chair-1');
+  const old=structuredClone(c);delete old.departments[0].chairId;assert.equal(validateContent(old).departments[0].chairId,null);
+  for(const change of [d=>d.chairId='ketua',d=>d.chairId='missing',d=>d.memberIds=['chair-1'],d=>d.memberIds=['member-1','member-1']] as ((d:any)=>void)[]){const bad=structuredClone(c);change(bad.departments[0]);assert.throws(()=>validateContent(bad));}
+  const invalid=structuredClone(c);invalid.departments[0].memberIds=['KETUA: MOCHAMAD GILANG'];assert.throws(()=>validateContent(invalid),/ID/);
+});

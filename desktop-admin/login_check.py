@@ -15,6 +15,8 @@ class MemorySettings:
 
 def begin_login_check(app, window):
     content = dict(schemaVersion=2, identity=dict(cabinetName='Disposable Council',term='2026/2027',logo='/images/brand/cabinet-default.webp',logoAlt='QA logo'), statistics=dict(members=None,programs=0,activities=12), vision='Disposable GUI HTTP test', missions=['Test only'], people=[], departments=[], programs=[], events=[])
+    content['people']=[dict(id=key,group='member',role=role,name=name,classLabel='',introduction='QA only',photo='/_astro/qa.webp',photoAlt='QA',photoIsPlaceholder=True,programIds=[],results=[]) for key,role,name in [('qa-chair','Ketua Bidang','QA Ketua'),('qa-member','Anggota Bidang','QA Anggota')]]
+    content['departments']=[dict(id='sekbid-01',number='01',name='QA Bidang',description='QA only',photo='/_astro/qa.webp',photoAlt='QA',photoIsPlaceholder=True,chairId='qa-chair',memberIds=['qa-member'],programIds=[],results=[])]
     password = 'Only a disposable local GUI test password.'
     token = 'a' * 64
     class Handler(BaseHTTPRequestHandler):
@@ -61,6 +63,7 @@ def begin_login_check(app, window):
                 assert window.content['vision']==content['vision']
                 window.nav.setCurrentRow(5); assert window.editor.fields['cabinetName'][0].text()=='Disposable Council'
                 window.nav.setCurrentRow(6); assert window.editor.value()['programs']==0 and window.editor.value()['members'] is None
+                window.nav.setCurrentRow(2);assert window.editor.value()['chairId']=='qa-chair' and window.editor.value()['memberIds']==['qa-member']
                 window.nav.setCurrentRow(7)
             elif step==3:
                 assert window.history==[];window.logout()

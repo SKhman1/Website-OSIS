@@ -14,7 +14,7 @@ function image(src: string, alt: string, eager = false) {
 function empty(title: string, description: string) {
   const root=el('div','empty-state fucknutcard'), copy=el('div'); root.append(el('span','empty-dot'));copy.append(el('h3','',title),el('p','',description));root.append(copy);return root;
 }
-function card(item: CmsPerson | CmsDepartment, heading = 'h3') {
+function card(item: CmsPerson | CmsDepartment, heading = 'h3', roleLabel?: string) {
   const person='group' in item;
   const root=el('a',`department-card fucknutcard department-preview-card${person?' leadership-card':''}`);
   root.href=person?personPath(item):`/anggota/seksi-bidang/${item.id}`; root.id=item.id;
@@ -22,7 +22,7 @@ function card(item: CmsPerson | CmsDepartment, heading = 'h3') {
   const frame=el('div',`department-photo${item.photoIsPlaceholder?' department-photo-example':''}`);frame.append(image(item.photo,item.photoAlt));
   if(item.photoIsPlaceholder)frame.append(el('span','department-example-label','Foto contoh · Purbaya'));
   if(!person)frame.append(el('span','department-number-badge',item.number));
-  const body=el('div','department-card-body');const title=el(heading==='h4'?'h4':'h3',person?'leadership-card-title':'',person?item.role:item.name);
+  const body=el('div','department-card-body');const title=el(heading==='h4'?'h4':'h3',person?'leadership-card-title':'',person?roleLabel??item.role:item.name);
   title.id=`preview-${item.id}-title`;root.setAttribute('aria-labelledby',title.id);
   body.append(title,el('p','',person?item.name??'Nama akan diumumkan.':item.description),el('span','department-card-link',person?'Kenali pengurus ↗':'Lihat bidang ↗'));
   root.append(frame,body);return root;
@@ -109,7 +109,16 @@ export function renderContent(content: CmsContent) {
       const photo=departmentRoot.querySelector('.profile-photo');if(photo)photoUpdate(photo,d.photo,d.photoAlt,d.photoIsPlaceholder);
       const work=departmentRoot.querySelector('[data-cms-programs]');if(work)work.replaceChildren(programs(d.programIds,content));
       const result=departmentRoot.querySelector('[data-cms-results]');if(result)result.replaceChildren(results(d.results));
-      const team=departmentRoot.querySelector('[data-cms-team]');if(team){const people=content.people.filter(p=>d.memberIds.includes(p.id));const grid=el('div','leadership-grid');grid.append(...people.map(p=>card(p)));team.replaceChildren(people.length?grid:empty('Anggota segera diperkenalkan','Daftar anggota bidang akan ditampilkan setelah tersedia.'));}
+      const team=departmentRoot.querySelector('[data-cms-team]');if(team){
+        const chair=content.people.find(p=>p.id===d.chairId), members=d.memberIds.map(id=>content.people.find(p=>p.id===id)).filter((p):p is CmsPerson=>Boolean(p));
+        const groups=el('div','field-team-groups');
+        for(const [label,people,isChair] of [['Ketua seksi bidang',chair?[chair]:[],true],['Anggota seksi bidang',members,false]] as const){
+          if(!people.length)continue;
+          const section=el('div','field-team-group'), grid=el('div','leadership-grid');section.dataset.cmsTeamRole=isChair?'chair':'members';
+          section.append(el('h3','',label));grid.append(...people.map(p=>card(p,'h4',isChair?'Ketua seksi bidang':'Anggota seksi bidang')));section.append(grid);groups.append(section);
+        }
+        team.replaceChildren(chair||members.length?groups:empty('Anggota segera diperkenalkan','Daftar anggota bidang akan ditampilkan setelah tersedia.'));
+      }
       document.title=`${d.name} | SMK Diponegoro 01 Jakarta`;
       departmentRoot.querySelectorAll<HTMLAnchorElement>('.profile-neighbors a').forEach(link=>{const id=link.pathname.split('/').filter(Boolean).at(-1);const peer=content.departments.find(item=>item.id===id);if(peer)link.textContent=peer.name+' ↗';});
     }

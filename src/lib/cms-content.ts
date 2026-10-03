@@ -7,7 +7,7 @@ export interface CmsPerson {
 }
 export interface CmsDepartment {
   id: string; number: string; name: string; description: string; photo: string;
-  photoAlt: string; photoIsPlaceholder: boolean; memberIds: string[]; programIds: string[]; results: CmsResult[];
+  photoAlt: string; photoIsPlaceholder: boolean; chairId?: string | null; memberIds: string[]; programIds: string[]; results: CmsResult[];
 }
 export interface CmsRundown { start: string; end: string; agenda: string; location: string; }
 export interface CmsEvent {
@@ -84,10 +84,10 @@ export function validateContent(value: unknown): CmsContent {
     return {id: identifier(p.id), group: p.group as CmsPerson['group'], role: text(p.role,'Peran',100), name: p.name === null ? null : text(p.name,'Nama',160), classLabel: text(p.classLabel,'Kelas',100,true), introduction: text(p.introduction,'Perkenalan',3000), photo: photo(p.photo), photoAlt: text(p.photoAlt,'Deskripsi foto',250), photoIsPlaceholder: boolean(p.photoIsPlaceholder), programIds: ids(p.programIds), results: results(p.results)};
   });
   const departments = list(c.departments, 10, item => {
-    const d = object(item, ['id','number','name','description','photo','photoAlt','photoIsPlaceholder','memberIds','programIds','results']);
+    const d = object(item, ['id','number','name','description','photo','photoAlt','photoIsPlaceholder','chairId','memberIds','programIds','results']);
     const number = text(d.number,'Nomor bidang',2); if (!/^(?:0[1-9]|10)$/.test(number)) fail('Nomor bidang harus 01–10.');
     if (d.id !== `sekbid-${number}`) fail('ID dan nomor bidang tetap agar tautan profil tidak berubah.');
-    return {id: identifier(d.id), number, name: text(d.name,'Nama bidang',160), description: text(d.description,'Deskripsi',3000), photo: photo(d.photo), photoAlt: text(d.photoAlt,'Deskripsi foto',250), photoIsPlaceholder: boolean(d.photoIsPlaceholder), memberIds: ids(d.memberIds), programIds: ids(d.programIds), results: results(d.results)};
+    return {id: identifier(d.id), number, name: text(d.name,'Nama bidang',160), description: text(d.description,'Deskripsi',3000), photo: photo(d.photo), photoAlt: text(d.photoAlt,'Deskripsi foto',250), photoIsPlaceholder: boolean(d.photoIsPlaceholder), chairId: d.chairId == null ? null : identifier(d.chairId), memberIds: ids(d.memberIds), programIds: ids(d.programIds), results: results(d.results)};
   });
   const events = list(c.events, 100, item => {
     const e = object(item, ['id','title','description','date','location','start','end','rundown','notify']);
@@ -105,8 +105,13 @@ export function validateContent(value: unknown): CmsContent {
   if (departments.length !== 10 || new Set(departments.map(d => d.number)).size !== 10) fail('Sepuluh seksi bidang harus tersedia.');
   const reserved = ['pembina','seksi-bidang','profil-template'];
   if (people.some(p => reserved.includes(p.id))) fail('ID ini dipakai direktori.');
-  for (const item of [...people,...departments]) if (item.programIds.some(id => !programs.some(p => p.id === id))) fail('Program yang dirujuk tidak ditemukan.');
-  for (const d of departments) if (d.memberIds.some(id => !people.some(p => p.id === id && p.group === 'member'))) fail('Anggota bidang harus dari kelompok anggota.');
+  for (const item of [...people,...departments]) if (item.programIds.some(id => !programs.some(p => p.id === id))) fail(`Program untuk ${'number' in item ? `seksi bidang ${item.number}` : item.role} tidak ditemukan. Pilih program yang sudah dibuat di console.`);
+  for (const d of departments) {
+    if (d.chairId && !people.some(p => p.id === d.chairId && p.group === 'member')) fail(`Ketua seksi bidang ${d.number} harus dari daftar anggota seksi bidang.`);
+    if (d.chairId && d.memberIds.includes(d.chairId)) fail(`Ketua seksi bidang ${d.number} sudah dipisahkan dari daftar anggota.`);
+    if (new Set(d.memberIds).size !== d.memberIds.length) fail(`Anggota seksi bidang ${d.number} tidak boleh dipilih dua kali.`);
+    if (d.memberIds.some(id => !people.some(p => p.id === id && p.group === 'member'))) fail(`Anggota seksi bidang ${d.number} tidak ditemukan. Tambahkan profil anggota lalu pilih namanya.`);
+  }
   return {schemaVersion: 2, identity, statistics, vision: text(c.vision,'Visi',3000), missions: strings(c.missions,30), people, departments, programs, events};
 }
 export function contentPhotos(content: CmsContent): Set<string> {

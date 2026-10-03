@@ -63,7 +63,7 @@ class Client:
         return result
 
     def photo(self, path):
-        if not re.fullmatch(r'(?:/_astro/[a-zA-Z0-9_.-]+\.(?:webp|png|jpe?g)|/api/media/[a-f0-9-]{36}\.webp)', path):
+        if path != '/images/brand/cabinet-default.webp' and not re.fullmatch(r'(?:/_astro/[a-zA-Z0-9_.-]+\.(?:webp|png|jpe?g)|/api/media/[a-f0-9-]{36}\.webp)', path):
             raise ApiError('Alamat foto tidak valid.')
         headers = {'Accept': 'image/webp,image/png,image/jpeg', 'User-Agent': 'VND-Console/1.0'}
         if self.token and path.startswith('/api/media/'): headers['Authorization'] = 'Bearer ' + self.token

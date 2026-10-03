@@ -151,3 +151,13 @@ Cabinet logos use the existing authenticated media upload, draft privacy and
 publication checks. Zero is valid; null remains explicitly labelled preview data.
 Social contacts are lightweight local SVGs from Simple Icons (CC0):
 https://github.com/simple-icons/simple-icons; no third-party embed or tracking script.
+
+## Department chair and member input
+
+Each department has one optional `chairId` and a separate `memberIds` list.
+Both refer to people in the member group; a chair cannot also occur in that
+same field's member list. Existing documents without chairId normalize to null.
+Native pickers display names and program titles, create/edit references inside
+modal Qt forms, and generate internal IDs. Results and photo references remain
+unchanged when assigning chairs. Public field profiles render chair and members
+under separate subheadings with normal links to their individual profiles.

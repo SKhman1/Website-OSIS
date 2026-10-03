@@ -112,3 +112,13 @@ Pilih **Simpan draft ke server**, periksa **Preview publikasi**, lalu
 Logo OSIS resmi tetap terpisah dari logo angkatan. Logo PNG transparan berbentuk
 persegi dianjurkan; preview tersedia sebelum publikasi. Gunakan versi GUI terbaru
 untuk menyimpan pengaturan ini; versi lama akan diminta diperbarui.
+
+Ketua seksi bidang sekarang dipilih terpisah dari anggotanya. Menu **Seksi bidang**
+menampilkan pilihan nama; gunakan **Tambah ketua…**, **Tambah anggota…**, atau
+**Tambah program…** untuk membuat profil/program langsung dari bidang tersebut.
+Tidak perlu mengetik ID. Ketua otomatis dikeluarkan dari pilihan anggota agar
+namanya tidak muncul dua kali. Preview publikasi menampilkan nama dan judul
+program. Simpan draft terlebih dahulu, lalu publikasikan setelah diperiksa.
+Build Windows terbaru ada di `desktop-admin/dist-members/VND-Console/`;
+launcher `start-admin.ps1` membuka versi ini. Folder versi lama dipertahankan agar
+jendela yang sedang digunakan dan perubahan lokal tidak terganggu.

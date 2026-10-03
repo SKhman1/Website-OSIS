@@ -47,10 +47,12 @@ assert.match(p.document.querySelector('.profile-hero .section-label').textConten
 console.log('PASS dynamically created adviser profile, correct breadcrumb, role and peers');
 p=page('anggota/seksi-bidang/sekbid-01/index.html','/anggota/seksi-bidang/sekbid-01');
 c.people.push({...c.people[1],id:'new-member',group:'member',role:'Anggota Bidang',name:'Anggota Baru',programIds:[],results:[]});
+c.people.push({...c.people[1],id:'new-chair',group:'member',role:'Ketua Bidang',name:'Ketua Baru',programIds:[],results:[]});c.departments[0].chairId='new-chair';
 c.departments[0].name='Nama Bidang Baru';c.departments[0].memberIds=['new-member'];c.departments[0].programIds=[c.programs[0].id];
 c.departments[0].results=[{id:'hasil-1',title:'Hasil Kerja',description:'Laporan offline',date:'2026-10-03'}];p.render(c);
 assert.equal(p.document.querySelector('#profile-title').textContent,'Nama Bidang Baru');
-assert.equal(p.document.querySelector('[data-cms-team] a').pathname,'/anggota/new-member');
+assert.equal(p.document.querySelector('[data-cms-team-role="chair"] a').pathname,'/anggota/new-chair');
+assert.equal(p.document.querySelector('[data-cms-team-role="members"] a').pathname,'/anggota/new-member');
 assert.match(p.document.querySelector('[data-cms-programs]').textContent,new RegExp(c.programs[0].title));
 assert.match(p.document.querySelector('[data-cms-results]').textContent,/Hasil Kerja/);
 console.log('PASS bidang updates name, member link, program and completed work');

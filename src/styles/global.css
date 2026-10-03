@@ -96,6 +96,8 @@ img { display: block; max-width: 100%; height: auto; }
 .vision-grid h3 { color: var(--color-ink); margin-bottom: var(--space-4); }
 .mission-copy p { white-space: pre-line; }
 .mission-copy p + p { margin-top: .75rem; }
+.field-team-group > h3 { font-size: 1.1rem; margin-bottom: var(--space-6); }
+.field-team-group + .field-team-group { margin-top: var(--space-12); }
 .empty-state { display: flex; align-items: flex-start; gap: var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-8); }
 .empty-dot { width: .6rem; height: .6rem; margin-top: .45rem; background: var(--color-brand); border-radius: 50%; flex-shrink: 0; }
 .empty-state h3 { color: var(--color-ink); }
