@@ -98,3 +98,8 @@ sh build.sh
 
 Ketergantungan Qt menggunakan PySide6-Essentials; Qt WebEngine tidak disertakan.
 Informasi API, database, dan pengujian pengembang ada di `../CMS.md`.
+
+Uji paket Windows dapat dijalankan dengan `VND-Console.exe --self-test`.
+Tes ini menjalankan alur login, memuat konten, riwayat, logout, penolakan password,
+dan percobaan ulang lewat server lokal sementara. Tidak menggunakan akun asli,
+mengubah pengaturan tersimpan, atau menerbitkan konten.

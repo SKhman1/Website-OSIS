@@ -129,3 +129,12 @@ tests login/read restrictions/logout, then removes it in `finally`. It never
 publishes content or submits aspirations. Run only with the owner's existing
 Wrangler authorization. Windows packaging and frozen startup have been tested;
 macOS/Linux packaging remains unverified.
+
+GUI worker results pass through retained QObject receivers with explicit queued
+slots on the main thread, following [Qt thread affinity guidance](https://doc.qt.io/qtforpython-6/tutorials/basictutorial/signals_and_slots.html#thread-affinity).
+`VND-Console.exe --self-test` also exercises the packaged GUI's actual HTTP login,
+content refresh, history, logout, rejected credentials, and retry against a
+disposable loopback server; no real passwords or settings are used. This covers
+the asynchronous callback crash that startup-only checks previously missed.
+`scripts/cms-gui-remote-check.py` tests GUI login/read/logout against Cloudflare
+with a temporary editor and removes it afterward, without publishing content.

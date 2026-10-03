@@ -4,6 +4,8 @@ import json
 import os
 import tempfile
 import unittest
+import threading
+import time
 from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtWidgets import QApplication
@@ -12,6 +14,8 @@ from client import Client
 from importers import import_rundown, prepare_photo
 from main import Window, Editor, STYLE
 from provision import encode_password
+from gui_async import start_job
+from PySide6.QtCore import QEventLoop, QTimer
 
 class Tests(unittest.TestCase):
     @classmethod
@@ -66,5 +70,20 @@ class Tests(unittest.TestCase):
         window.loaded({'content': copy.deepcopy(self.seed), 'version': 0, 'publishedVersion': 0}); window.lock()
         self.assertIsNone(window.content); self.assertEqual(window.client.token, ''); self.assertIsNone(window.editor); self.assertEqual(window.items.count(), 0)
         self.assertEqual(window.scroll.widget().findChildren(type(window.password)), []); window.close()
+    def test_worker_success_and_failure_arrive_on_gui_thread(self):
+        window = Window(self.root); gui_thread = threading.get_ident()
+        for raises in (False, True):
+            loop = QEventLoop(); received = []; worker_threads = []
+            def work():
+                worker_threads.append(threading.get_ident()); time.sleep(.02)
+                if raises: raise ValueError('Disposable test failure')
+                return 'result'
+            def success(value): received.append(('success', value, threading.get_ident())); loop.quit()
+            def failure(exc): received.append(('failure', type(exc).__name__, threading.get_ident())); loop.quit()
+            start_job(window, work, success, failure)
+            timeout = QTimer(); timeout.setSingleShot(True); timeout.timeout.connect(loop.quit); timeout.start(2000); loop.exec(); timeout.stop()
+            self.assertEqual(received, [('failure' if raises else 'success', 'ValueError' if raises else 'result', gui_thread)])
+            self.assertNotEqual(worker_threads[0], gui_thread); self.assertEqual(len(window._jobs), 0)
+        window.close()
 
 if __name__ == "__main__": unittest.main()

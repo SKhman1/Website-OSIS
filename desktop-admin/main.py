@@ -6,7 +6,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool, QSettings, QTimer
+from PySide6.QtCore import Qt, Signal, QSettings, QTimer
 from PySide6.QtGui import QFont, QCloseEvent, QPixmap
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QPlainTextEdit, QFormLayout, QListWidget, QStackedWidget, QScrollArea, QComboBox, QCheckBox,
@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
 from client import Client, ApiError
 from importers import import_rundown, prepare_photo
 from provision import provision_account
+from gui_async import start_job
 
 BASE_URL = "https://vnd-smkdipo1.pages.dev"
 STYLE = """
@@ -60,18 +61,6 @@ def message(parent, title, text, question=False):
     box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No if question else QMessageBox.StandardButton.Ok)
     box.setDefaultButton(QMessageBox.StandardButton.No if question else QMessageBox.StandardButton.Ok)
     return box.exec() == QMessageBox.StandardButton.Yes
-
-class Signals(QObject):
-    done = Signal(object)
-    failed = Signal(object)
-
-class Task(QRunnable):
-    def __init__(self, work):
-        super().__init__(); self.work = work; self.signals = Signals()
-    def run(self):
-        try: self.signals.done.emit(self.work())
-        except Exception as exc: self.signals.failed.emit(exc)
-        finally: self.work = None
 
 class RowsEditor(QWidget):
     changed = Signal()
@@ -205,10 +194,14 @@ class SetupDialog(QDialog):
         if not message(self, "Setup akun", f"Buat/reset akun {self.username.text()} sebagai {self.role.currentText()} pada database {'lokal' if self.local.isChecked() else 'Cloudflare'}?", True): return
         project, username, password, role, local = self.project.text(), self.username.text().strip(), self.password.text(), self.role.currentText(), self.local.isChecked()
         self.submit.setEnabled(False); self.password.clear(); self.confirm.clear(); self.status.setText("Menyiapkan akun…")
-        task = Task(lambda: provision_account(project, username, password, role, local))
-        task.signals.done.connect(lambda _: (self.status.setText("Akun siap. Tutup dialog ini lalu login."), self.submit.setEnabled(True)))
-        task.signals.failed.connect(lambda exc: (self.status.setText(str(exc)), self.submit.setEnabled(True)))
-        QThreadPool.globalInstance().start(task)
+        start_job(self, lambda: provision_account(project, username, password, role, local),
+            lambda _: (self.status.setText("Akun siap. Tutup dialog ini lalu login."), self.submit.setEnabled(True)),
+            lambda exc: (self.status.setText(str(exc)), self.submit.setEnabled(True)))
+    def reject(self):
+        if not getattr(self, '_jobs', None): super().reject()
+    def closeEvent(self, event):
+        if getattr(self, '_jobs', None): event.ignore()
+        else: super().closeEvent(event)
 
 class Window(QMainWindow):
     def __init__(self, project, base_url=BASE_URL):
@@ -256,20 +249,20 @@ class Window(QMainWindow):
         outer.addWidget(body, 1); return page
     def run(self, work, done):
         if self.busy: return
-        self.busy = True; self.login_button.setEnabled(False); self.workspace.setEnabled(False)
+        self.busy = True; self.login_page.setEnabled(False); self.workspace.setEnabled(False)
         self.status.setText("Menghubungi server…"); self.login_status.setText("Menghubungi server…")
-        task = Task(work)
         def finished(result):
-            self.busy = False; self.login_button.setEnabled(True); self.workspace.setEnabled(True)
+            self.busy = False; self.login_page.setEnabled(True); self.workspace.setEnabled(True)
             if self.client and self.client.user: self.publish_button.setEnabled(self.client.user["role"] == "owner")
             done(result)
         def failed(exc):
-            self.busy = False; self.login_button.setEnabled(True); self.workspace.setEnabled(True)
+            self.busy = False; self.login_page.setEnabled(True); self.workspace.setEnabled(True)
             self.status.setText(str(exc)); self.login_status.setText(str(exc))
             if isinstance(exc, ApiError) and exc.status == 401 and self.root.currentIndex() == 1: self.lock()
             message(self, "Permintaan belum berhasil", str(exc))
-        task.signals.done.connect(finished); task.signals.failed.connect(failed); QThreadPool.globalInstance().start(task)
+        start_job(self, work, finished, failed)
     def login(self):
+        if self.busy: return
         try: candidate = Client(self.url.text())
         except ValueError as exc: message(self, "Alamat API", str(exc)); return
         username, password = self.username.text().strip(), self.password.text(); self.password.clear()
@@ -436,7 +429,12 @@ def main():
             sheet = Path(folder) / 'test.xlsx'; book.save(sheet); assert len(import_rundown(sheet)) == 1
             assert encode_password('Only a temporary startup test password').startswith('$scrypt$')
             Client(BASE_URL)
-        QTimer.singleShot(500, app.quit)
+        from login_check import begin_login_check
+        state, cleanup = begin_login_check(app, window)
+        try:
+            result = app.exec()
+            return result if state['passed'] else 1
+        finally: cleanup()
     return app.exec()
 
 if __name__ == "__main__": sys.exit(main())
