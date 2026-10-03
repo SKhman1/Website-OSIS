@@ -94,8 +94,8 @@ img { display: block; max-width: 100%; height: auto; }
 .muted-section { background: var(--color-surface); }
 .vision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); }
 .vision-grid h3 { color: var(--color-ink); margin-bottom: var(--space-4); }
-.vision-grid ol { padding-left: 1.2rem; margin: 0; }
-.vision-grid li + li { margin-top: .75rem; }
+.mission-copy p { white-space: pre-line; }
+.mission-copy p + p { margin-top: .75rem; }
 .empty-state { display: flex; align-items: flex-start; gap: var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-8); }
 .empty-dot { width: .6rem; height: .6rem; margin-top: .45rem; background: var(--color-brand); border-radius: 50%; flex-shrink: 0; }
 .empty-state h3 { color: var(--color-ink); }

@@ -43,7 +43,7 @@ const aspirationsOpen = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' &&
       <div class="section-heading" data-motion="reveal"><SectionLabel number="04" label="Arah bersama" /><h2 id="vision-title">Visi & misi.</h2></div>
       <div class="section-body vision-grid" data-motion="reveal" data-delay="100">
         <div><h3>Visi</h3><p data-cms-vision>{vision ?? 'Visi kepengurusan 2026/2027 akan diumumkan setelah disahkan.'}</p></div>
-        <div><h3>Misi</h3>{missions.length > 0 ? <ol data-cms-missions>{missions.map(mission => <li>{mission}</li>)}</ol> : <p>Misi kepengurusan 2026/2027 sedang disiapkan.</p>}</div>
+        <div><h3>Misi</h3><div class="mission-copy" data-cms-missions>{missions.map(mission => <p>{mission}</p>)}</div></div>
       </div>
     </div>
   </section>

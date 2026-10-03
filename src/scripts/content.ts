@@ -77,7 +77,7 @@ export function renderContent(content: CmsContent) {
   if(statsChanged)window.dispatchEvent(new CustomEvent('osis:statistics'));
 
   document.querySelectorAll('[data-cms-vision]').forEach(node=>node.textContent=content.vision);
-  document.querySelectorAll('[data-cms-missions]').forEach(node=>node.replaceChildren(...content.missions.map(m=>el('li','',m))));
+  document.querySelectorAll('[data-cms-missions]').forEach(node=>node.replaceChildren(...content.missions.map(m=>el('p','',m))));
   document.querySelectorAll<HTMLElement>('[data-cms-people]').forEach(node=>node.replaceChildren(...content.people.filter(p=>p.group===node.dataset.cmsPeople).map(p=>card(p,node.dataset.cmsHeading))));
   document.querySelectorAll<HTMLElement>('[data-cms-departments]').forEach(node=>node.replaceChildren(...content.departments.slice(0,Number(node.dataset.cmsLimit)||10).map(d=>card(d,node.dataset.cmsHeading))));
   document.querySelectorAll('[data-cms-events]').forEach(node=>node.replaceChildren(events(content.events)));
