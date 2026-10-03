@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "node_modules", ".npm-cache"],
+  "exclude": ["dist", "dist-pages", "node_modules", ".npm-cache", ".wrangler"],
   "compilerOptions": {
     "paths": { "@/*": ["./src/*"] }
   }

@@ -1,5 +1,5 @@
-import { closedAspirationsResponse } from '../../src/server/aspirations';
+import { handleAspirationRequest, type AspirationEnvironment } from '../../src/server/aspirations';
 
-export function onRequest({ request }: { request: Request }): Response {
-  return closedAspirationsResponse(request.method);
+export function onRequest({ request, env = {} }: { request: Request; env?: AspirationEnvironment }): Promise<Response> {
+  return handleAspirationRequest(request, env);
 }

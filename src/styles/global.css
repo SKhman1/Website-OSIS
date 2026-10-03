@@ -375,3 +375,28 @@ button:disabled { background: #dde1d9; color: #596058; cursor: not-allowed; }
   [data-motion-state] { opacity: 1; transform: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+
+/* Native Google Forms submission UI. */
+.category-group { margin-top: var(--space-6); }
+.category-group > legend { font-size: .85rem; font-weight: 650; }
+.field-requirement, .field-hint { color: var(--color-muted); font-size: .78rem; font-weight: 450; }
+.field-hint { margin-top: var(--space-2); }
+.category-choices { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
+.category-choice { display: flex; align-items: center; gap: var(--space-3); min-height: 3rem; margin: 0; padding: var(--space-3); border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-paper); cursor: pointer; }
+.category-choice:has(input:checked) { border-color: var(--color-brand-text); background: var(--color-brand-soft); }
+.category-choice:hover { border-color: var(--color-brand-text); }
+.category-choice:has(input:disabled) { cursor: not-allowed; border-color: var(--color-line); color: var(--color-muted); }
+.category-choice input { width: 1.1rem; height: 1.1rem; margin: 0; padding: 0; flex-shrink: 0; accent-color: var(--color-brand-text); }
+.category-choice span { overflow-wrap: anywhere; }
+.field-error { color: #a02720; font-size: .8rem; margin-top: var(--space-2); }
+.aspiration-form [aria-invalid="true"] { border-color: #a02720; }
+.character-count { text-align: right; font-variant-numeric: tabular-nums; }
+.form-verification { margin-top: var(--space-6); max-width: 100%; }
+.aspiration-guidelines .form-note h3 { font-size: 1rem; }
+.aspiration-form #aspiration-submit-label { font-size: .9rem; line-height: 1.35; }
+.form-spinner { width: 1rem; height: 1rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: aspiration-spin .8s linear infinite; }
+.form-spinner[hidden] { display: none; }
+@keyframes aspiration-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .form-spinner { animation: none; } }
+@media (max-width: 380px) { .category-choices { grid-template-columns: 1fr; } }

@@ -1,26 +1,65 @@
 ---
 import Base from '../layouts/Base.astro';
 import SectionLabel from '../components/SectionLabel.astro';
+import { aspirationCategories } from '../lib/aspiration-form';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const enabled = import.meta.env.PUBLIC_ASPIRATIONS_ENABLED === 'true' && Boolean(siteKey);
 ---
 <Base title="Ruang aspirasi">
   <div class="container page-content">
     <a class="text-link back-link" href="/">← Beranda</a>
-    <section class="page-heading" data-section="01" aria-labelledby="aspirasi-title"><div data-motion="hero"><SectionLabel number="01" label="Ruang aspirasi · Segera hadir" /></div><h1 id="aspirasi-title" data-motion="hero" data-delay="90">Suaramu<br />punya tempat.</h1><p data-motion="hero" data-delay="180">Ide kegiatan, saran fasilitas, atau masukan untuk OSIS. Ruang ini disiapkan agar kamu bisa menyampaikan aspirasi dengan mudah.</p></section>
+    <section class="page-heading" data-section="01" aria-labelledby="aspirasi-title">
+      <div data-motion="hero"><SectionLabel number="01" label={enabled ? 'Ruang aspirasi' : 'Ruang aspirasi · Segera hadir'} /></div>
+      <h1 id="aspirasi-title" data-motion="hero" data-delay="90">Suaramu<br />punya tempat.</h1>
+      <p data-motion="hero" data-delay="180">Ide kegiatan, saran fasilitas, atau masukan untuk OSIS. Sampaikan aspirasimu melalui halaman ini.</p>
+    </section>
     <div class="aspiration-layout aspiration-sections">
-      <section class="aspiration-guidelines" data-section="02" data-motion="reveal" aria-labelledby="guidelines-title"><SectionLabel number="02" label="Sebelum mengirim" /><h2 id="guidelines-title">Sampaikan dengan baik.</h2><p>Fokus pada ide dan solusi. Hindari mencantumkan informasi pribadi milik orang lain.</p><ol class="guidelines-list"><li><strong>Pilih topik yang sesuai.</strong><span>Supaya masukanmu mudah dipahami.</span></li><li><strong>Ceritakan dengan jelas.</strong><span>Jelaskan idemu dan perubahan yang kamu harapkan.</span></li><li><strong>Jaga rasa hormat.</strong><span>Gunakan bahasa yang baik kepada semua orang.</span></li></ol></section>
+      <section class="aspiration-guidelines" data-section="02" data-motion="reveal" aria-labelledby="guidelines-title">
+        <SectionLabel number="02" label="Sebelum mengirim" />
+        <h2 id="guidelines-title">Sampaikan dengan baik.</h2>
+        <p>Fokus pada ide dan solusi. Hindari mencantumkan informasi pribadi milik orang lain.</p>
+        <ol class="guidelines-list">
+          <li><strong>Pilih topik yang sesuai.</strong><span>Kamu boleh memilih lebih dari satu kategori.</span></li>
+          <li><strong>Ceritakan dengan jelas.</strong><span>Jelaskan idemu dan perubahan yang kamu harapkan.</span></li>
+          <li><strong>Jaga rasa hormat.</strong><span>Gunakan bahasa yang baik kepada semua orang.</span></li>
+        </ol>
+        <div class="form-note"><h3>Tentang jawabanmu</h3><p>Formulir ini tidak meminta nama, kelas, atau email. Setelah pengiriman dibuka, jawaban disimpan di Google Forms dan dikelola oleh pengurus yang diberi akses. Jawaban tidak ditampilkan di website publik.</p></div>
+      </section>
       <section class="aspiration-form fucknutcard" data-section="03" data-motion="reveal" data-delay="100" aria-labelledby="form-title">
-        <SectionLabel number="03" label="Formulir" /><h2 id="form-title">Ruang aspirasi</h2><p id="form-status">Formulir belum dibuka. Kamu belum bisa mengirim aspirasi melalui halaman ini.</p>
-        <form aria-describedby="form-status">
-          <fieldset disabled>
-            <legend class="sr-only">Pratinjau formulir aspirasi</legend>
-            <label for="category">Tentang apa?</label>
-            <select id="category" name="category"><option value="">Pilih topik</option><option value="kegiatan">Kegiatan sekolah</option><option value="fasilitas">Fasilitas</option><option value="osis">OSIS</option><option value="lainnya">Lainnya</option></select>
-            <label for="subject">Judul aspirasi</label><input id="subject" name="subject" type="text" maxlength="120" placeholder="Ringkas ide atau saranmu" />
-            <label for="message">Ceritakan idemu</label><textarea id="message" name="message" rows="6" maxlength="3000" placeholder="Apa yang bisa kita perbaiki bersama?"></textarea>
-            <button class="button" type="button">Pengiriman segera dibuka</button>
+        <SectionLabel number="03" label="Formulir" />
+        <h2 id="form-title">Ruang aspirasi</h2>
+        <p id="form-status" role="status" aria-live="polite" aria-atomic="true">{enabled ? 'Menyiapkan formulir…' : 'Formulir sedang disiapkan. Pengiriman dibuka setelah terhubung dengan Google Forms.'}</p>
+        <form id="aspiration-form" action="/api/aspirasi" method="post" data-enabled={String(enabled)} data-site-key={siteKey} aria-describedby="form-status" novalidate>
+          <fieldset id="aspiration-fields" disabled>
+            <legend class="sr-only">Formulir aspirasi siswa</legend>
+            <fieldset class="category-group" aria-describedby="categories-hint categories-error">
+              <legend>Kategori aspirasi <span class="field-requirement">(wajib)</span></legend>
+              <p id="categories-hint" class="field-hint">Pilih setidaknya satu kategori.</p>
+              <div class="category-choices">{aspirationCategories.map(category =>
+                <label class="category-choice" for={`category-${category.value}`}><input id={`category-${category.value}`} type="checkbox" name="categories" value={category.value} /><span>{category.label}</span></label>
+              )}</div>
+              <p id="categories-error" class="field-error" hidden></p>
+            </fieldset>
+            <div id="other-category-group" hidden>
+              <label for="otherCategory">Kategori lainnya <span class="field-requirement">(wajib jika dipilih)</span></label>
+              <input id="otherCategory" name="otherCategory" type="text" maxlength="120" autocomplete="off" aria-describedby="otherCategory-error" placeholder="Contoh: Lingkungan sekolah…" />
+              <p id="otherCategory-error" class="field-error" hidden></p>
+            </div>
+            <label for="subject">Judul aspirasi <span class="field-requirement">(opsional)</span></label>
+            <input id="subject" name="subject" type="text" maxlength="120" autocomplete="off" aria-describedby="subject-error" placeholder="Contoh: Tempat sampah di dekat kantin…" />
+            <p id="subject-error" class="field-error" hidden></p>
+            <label for="message">Sampaikan aspirasimu <span class="field-requirement">(wajib)</span></label>
+            <textarea id="message" name="message" rows="6" required maxlength="3000" autocomplete="off" aria-describedby="message-count message-error" placeholder="Ceritakan saran dan perubahan yang kamu harapkan…"></textarea>
+            <p id="message-count" class="field-hint character-count">0 / 3.000 karakter</p>
+            <p id="message-error" class="field-error" hidden></p>
+            <div hidden aria-hidden="true"><label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off" /></div>
+            <div id="aspiration-verification" class="form-verification"></div>
+            <button id="aspiration-submit" class="button" type="submit"><span id="aspiration-submit-label">{enabled ? 'Kirim aspirasi' : 'Pengiriman segera dibuka'}</span><span id="aspiration-spinner" class="form-spinner" aria-hidden="true" hidden></span></button>
           </fieldset>
         </form>
+        <noscript><p class="field-hint">Aktifkan JavaScript untuk menggunakan formulir ini setelah pengiriman dibuka.</p></noscript>
       </section>
     </div>
   </div>
+  <script>import '../scripts/aspiration-form';</script>
 </Base>

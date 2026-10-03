@@ -33,7 +33,7 @@ server. Do not use `astro preview` as a production server.
 - `src/components` and `src/layouts`: reusable site structure.
 - `src/scripts/motion.ts`: hero/section reveals and viewport-triggered matrix counters.
 - `DESIGN.md`: visual direction and boundaries.
-- `src/pages`: homepage, member directory, Aspirasi preview, and 404.
+- `src/pages`: homepage, member directory, native Aspirasi form (closed until configured), and 404.
 - `src/server/routes/aspirasi.ts`: local Node API route injected by the Astro config.
 - `functions/api/aspirasi.ts`: Cloudflare Pages API using the shared response handler.
 
@@ -71,25 +71,38 @@ Local development uses `file:./data/osis.db`. For serverless hosting such as
 Vercel, use persistent remote libSQL (for example Turso) through `DATABASE_URL`
 and `DATABASE_AUTH_TOKEN`, and select the matching Astro deployment adapter.
 A local SQLite file is not durable storage on ephemeral serverless instances.
-The Cloudflare phase-one deployment needs no database binding: submissions remain
-closed. Local database files are excluded from Git and the public build.
+The Cloudflare deployment needs no database binding for the Google Forms flow. Local database files are excluded from Git and the public build.
 
 SQLite suits this school site's expected workload. Higher sustained write
 concurrency may justify PostgreSQL later; that needs a schema/driver migration,
 not just changing the URL. Keep database code in the server module boundary.
 
-## Native aspirations: next phase
+## Native aspirations with Google Forms
 
-The form is disabled and `/api/aspirasi` returns HTTP 503 on POST. Other methods
-return 405. The scaffold cannot accept, store, or publicly list submissions.
-The database connection is lazy; building public pages requires no credentials.
+Students fill the native OSIS form at `/aspirasi`; the server forwards validated
+submissions to a signed Google Apps Script bridge. Staff review responses in
+Google Forms or its private linked Sheet. There is no public response-reading
+endpoint and no database or bot is required for this integration.
 
-Before enabling submissions, implement server validation and request-size limits,
-same-origin protection, persistent abuse controls, an agreed privacy/retention
-policy, and authenticated staff review. Do not promise anonymity without agreeing
-how server/platform logs and optional contact data will be handled.
-Test direct requests independently of the browser form. Never trust disabled
-fields, hidden controls, class names, or a console warning as authorization.
+The respondent form is https://forms.gle/oX6GDK8YqjM5HfzW7. Its verified fields
+are multiple checkbox categories (including Other), optional title, and required
+message. The frontend uses the existing typography, orange tokens, and motion.
+
+Submission remains **closed by default** until the owner deploys the Apps Script,
+sets server secrets and Turnstile keys, and enables both build/runtime flags.
+Read `integrations/google-forms/SETUP.md` for the exact owner setup, deployment,
+privacy settings, manual end-to-end checks, and limitations.
+
+The shared API enforces method/origin/content type, bounded body reads, field
+validation, honeypot, and server-side Turnstile verification. Server-to-Google
+requests are HMAC-signed. The script limits daily writes and remembers retry IDs
+for 24 hours; ambiguous writes remain pending for owner review rather than
+blindly creating another response. Failed submissions preserve browser inputs.
+No sensitive request bodies or upstream responses are logged or returned.
+
+Unit/integration tests use an injected HTTP transport and a mocked Apps Script
+runtime; they never submit to the real Google Form. A real end-to-end test still
+requires owner authorization/setup and working Google/Turnstile credentials.
 
 ## Cloudflare Pages deployment
 
@@ -123,10 +136,9 @@ automatically. A later GitHub Actions workflow can use a scoped Cloudflare Pages
 API token stored in GitHub Secrets. Do not put tokens in code or `.env.example`.
 
 Cloudflare's Astro adapter targets Workers in current Astro releases. This Pages
-setup keeps the public site static and lets Pages Functions handle the future
-form. Before enabling persistence, choose a Cloudflare-compatible remote libSQL
-driver or implement a D1 binding and migration; a local SQLite file cannot be
-used as persistent storage in Pages Functions.
+setup keeps the public site static and uses Pages Functions for the Google Forms
+submission bridge. Google Forms stores the responses; the old SQLite scaffold
+is not used by this flow.
 
 ## Seksi bidang content
 
@@ -146,7 +158,7 @@ the first four teams via URL anchors; all ten remain available in the gallery.
 No carousel dependency or social-media embed is loaded. Research limitations
 and public sources are documented in `SOCIAL-RESEARCH.md`.
 
-Future aspirations/WhatsApp work is recorded in `ROADMAP.md`; it remains deferred.
+Current aspirations setup and deferred WhatsApp work are recorded in `ROADMAP.md`.
 
 ## Leadership content
 
