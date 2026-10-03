@@ -70,7 +70,7 @@ function initialize(form: HTMLFormElement) {
     api = (window as Window & { turnstile?: Turnstile }).turnstile;
     if (!api) { status.textContent = 'Pemeriksaan keamanan belum siap. Muat ulang halaman untuk mencoba lagi.'; return; }
     widgetId = api.render(verification, {
-      sitekey: form.dataset.siteKey, action: 'aspirasi', language: 'id', size: 'flexible',
+      sitekey: form.dataset.siteKey, action: 'aspirasi', language: 'id', size: 'compact',
       callback: (value: string) => { token = value; },
       'expired-callback': () => { token = ''; },
       'error-callback': () => { token = ''; status.textContent = 'Pemeriksaan keamanan gagal. Periksa koneksi dan coba lagi.'; },

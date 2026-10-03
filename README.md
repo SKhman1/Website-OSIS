@@ -1,4 +1,4 @@
-# OSIS Dipo 1 website
+# OSIS SMK Diponegoro 01 website
 
 Phase-one skeleton for SMK Diponegoro 1 Jakarta's OSIS website, period 2026/2027.
 
@@ -183,26 +183,32 @@ untrusted code. DevTools remains available and real diagnostic logs still work.
 ## Notification island
 
 `src/components/NotificationIsland.astro` and `src/scripts/notifications.ts`
-provide one fixed capsule below the sticky navbar on every page. A confirmed
-aspiration receipt opens a thank-you message for 12 seconds. Hover, keyboard
-focus, and a hidden browser tab pause its timer. Close/Escape dismiss it.
-The inline form receipt remains available after the capsule closes.
+provide a compact capsule inside the sticky navbar on every page. Long previews
+scroll rightwards with a seamless duplicate that is hidden from screen readers.
+Click opens a fluid detail card anchored to the capsule. On narrow screens, the
+capsule occupies a second row inside the same navbar. Escape or clicking outside
+collapses the card; Close dismisses it. The menu stays available while notices show.
+
+Confirmed aspiration receipts remain for at least 12 seconds, extended to cover
+a complete text loop. Hover, keyboard focus, and a hidden browser tab pause the
+timer and scrolling. Expanded receipts stay open until collapsed or dismissed.
+The inline form receipt remains available afterwards. Student messages never
+appear in notifications.
 
 Add approved notices to `src/content/announcements.ts` with a unique `id`,
 `kind` (`live`, `event`, or `info`), `title`, and `message`. Optional `href`
 and `linkLabel` provide a normal link; `startsAt`/`endsAt` use ISO timestamps
 with a Jakarta offset (`+07:00`). Empty configuration renders no notification.
-The browser checks published schedule boundaries once a minute, without
-network polling. Publishing new content requires rebuilding/redeploying; this
-is not an automatic feed or a staff dashboard. A live notice first expands,
-then collapses after 6.5 seconds and stays until dismissed or its schedule ends.
-Dismissed notice IDs last for that browser-tab session. Success receipts take
-priority and restore the active notice afterwards. Other site code can import
-`notify()` to present information through the same component.
+The browser checks schedule boundaries once a minute without network polling.
+New content requires rebuilding/redeploying. Approved notices start compact and
+stay until dismissed or their schedule ends. Dismissed IDs last for that browser
+tab session. Success receipts take priority and restore the active notice later.
+Other site code can import `notify()` to use the same component.
 
-Motion animates transform/opacity, supports interruption and reduced-motion
-preferences, and hides the capsule while the mobile menu is open or when it
-would obstruct a focused control. Student messages never appear in the island.
+Motion uses transform/opacity and supports interruption. Reduced motion disables
+morphing and scrolling, with full text still available in the expanded card.
+Opening the navigation menu hides the capsule; moving keyboard focus to an
+obstructed control collapses the detail card.
 
 
 ## People, departments, and work
@@ -222,3 +228,13 @@ Programs referenced by departments/profiles resolve from `allPrograms`.
 A result requires `id`, `title`, `description`, and an ISO `date`; optional
 `photo`/`photoAlt` can add approved documentation. Leave results empty until
 actual reports are supplied. Publication requires build and redeployment.
+
+
+## School identity and hero
+
+The brand is OSIS SMK Diponegoro 01, with cabinet name Vimsati Natta Darsa.
+The homepage uses the supplied school photo in `src/assets/school/school.jpg`;
+Astro generates responsive WebP variants. The original campus photograph is
+kept unchanged and the caption explicitly identifies SMK Diponegoro 01.
+The aspiration security widget uses its supported compact size to fit narrow
+screens without clipping.

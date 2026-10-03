@@ -1,5 +1,6 @@
 ---
 import Brand from './Brand.astro';
+import NotificationIsland from './NotificationIsland.astro';
 import { navigation } from '../content/site';
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const active = (href: string) => href === path || (!href.includes('#') && path.startsWith(`${href}/`));
@@ -12,6 +13,7 @@ const active = (href: string) => href === path || (!href.includes('#') && path.s
         <a href={href} aria-current={active(href) ? (href === path ? 'page' : 'location') : undefined}>{label}</a>
       ))}
     </nav>
+    <NotificationIsland />
     <a class="button button-small header-aspirasi" href="/aspirasi" aria-current={path === '/aspirasi' ? 'page' : undefined}>Ruang aspirasi <span aria-hidden="true">↗</span></a>
     <details class="mobile-menu">
       <summary>Menu <span aria-hidden="true">+</span></summary>

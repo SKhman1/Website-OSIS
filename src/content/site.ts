@@ -4,10 +4,11 @@ import advisorPhoto from '../assets/placeholders/purbaya-advisor.png';
 import { mainPrograms, secretaryPrograms, treasurerPrograms, type WorkProgram, type WorkResult } from './work';
 
 export const site = {
-  name: 'OSIS Dipo 1',
-  school: 'SMK Diponegoro 1 Jakarta',
+  name: 'OSIS SMK Diponegoro 01',
+  cabinetName: 'Vimsati Natta Darsa',
+  school: 'SMK Diponegoro 01 Jakarta',
   term: '2026/2027',
-  description: 'Ruang informasi, kegiatan, dan aspirasi siswa SMK Diponegoro 1 Jakarta.',
+  description: 'Ruang informasi, kegiatan, dan aspirasi siswa SMK Diponegoro 01 Jakarta.',
   instagram: 'https://www.instagram.com/osis_smkdipo1/',
 };
 

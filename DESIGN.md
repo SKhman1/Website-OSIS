@@ -1,4 +1,4 @@
-# OSIS Dipo 1 design foundation
+# OSIS SMK Diponegoro 01 design foundation
 
 Voice: Indonesian, clear, friendly, formal enough for a school organization.
 Audience: students, school staff, and visitors. Primary jobs: understand OSIS,
@@ -76,13 +76,24 @@ blocked context menus, or suppressed logs.
 
 ## Notification island
 
-One dark capsule floats below the sticky white navbar. Orange marks the status
-and icon; title and detail retain Manrope and the shared spacing scale. It is
-hidden when there is no confirmed receipt or approved active announcement.
+One dark capsule sits inside the sticky white navbar. Desktop replaces the
+inline navigation with the capsule and keeps a menu trigger; mobile places the
+capsule on a second navbar row. Orange marks status and icon. Long compact text
+scrolls right; clicking morphs the capsule into a detail card at the same anchor.
+It remains hidden without a confirmed receipt or approved announcement.
 Success, live, event, and information notices share one layout. Entry takes
-560ms, expansion 440ms, exit 220ms; animations use transform/opacity with a
-soft settling curve. Reduced motion skips these movements. Notices support
-keyboard dismissal, hover/focus timer pause, safe areas, and narrow screens.
+560ms, expansion 500ms, exit 220ms; transform/opacity provides soft settling.
+Reduced motion disables morphing and scrolling. Escape/click outside collapses;
+Close dismisses. Hover/focus pauses scrolling and timers. Keyboard navigation,
+narrow screens, safe areas, and the open navigation menu remain supported.
+
+## School-photo hero
+
+Lead with Vimsati Natta Darsa and explicitly label OSIS SMK Diponegoro 01.
+Pair the typography with the real school photo, an understated term chip,
+and a readable campus caption. The two-column desktop layout stacks on mobile.
+Responsive WebP sizes, eager hero loading, shared spacing, and the existing
+orange palette keep the page lightweight and consistent.
 
 
 ## Profile pages and program detail

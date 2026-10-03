@@ -68,7 +68,7 @@ export const secretaryPrograms: WorkProgram[] = [
   },
   {
     id: 'list-piket', title: 'Penyusunan daftar piket', frequency: 'Harian · jadwal mingguan',
-    description: 'Mengatur piket harian untuk menyambut siswa dan guru SMK Diponegoro 1.',
+    description: 'Mengatur piket harian untuk menyambut siswa dan guru SMK Diponegoro 01.',
     details: ['Daftar petugas diperbarui setiap minggu untuk pelaksanaan piket setiap hari.'],
     goals: ['Membiasakan budaya 5S: senyum, salam, sapa, sopan, dan santun.', 'Meningkatkan kedisiplinan siswa.'],
   },

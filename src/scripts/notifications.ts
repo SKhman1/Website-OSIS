@@ -23,7 +23,10 @@ function initialize(host: HTMLElement) {
   const shell = host.querySelector<HTMLElement>('[data-island-shell]')!;
   const title = host.querySelector<HTMLElement>('[data-island-title]')!;
   const label = host.querySelector<HTMLElement>('[data-island-label]')!;
-  const summary = host.querySelector<HTMLElement>('[data-island-summary]')!;
+  const textWindow = host.querySelector<HTMLElement>('[data-island-window]')!;
+  const track = host.querySelector<HTMLElement>('[data-island-track]')!;
+  const copy = host.querySelector<HTMLElement>('[data-island-copy]')!;
+  const header = host.closest<HTMLElement>('.site-header')!;
   const message = host.querySelector<HTMLElement>('[data-island-message]')!;
   const detail = host.querySelector<HTMLElement>('[data-island-detail]')!;
   const link = host.querySelector<HTMLAnchorElement>('[data-island-link]')!;
@@ -40,6 +43,8 @@ function initialize(host: HTMLElement) {
   let current: Notification | undefined;
   const queue: Notification[] = [];
   let animation: Animation | undefined;
+  let marquee: Animation | undefined;
+  let tickerFrame = 0;
   let timer = 0;
   let deadline = 0;
   let remaining = 0;
@@ -58,7 +63,7 @@ function initialize(host: HTMLElement) {
     remaining = Math.max(0, deadline - performance.now());
   }
   function resumeTimer() {
-    if (timer || !timerAction || document.hidden || hovering || shell.contains(document.activeElement)) return;
+    if (timer || !timerAction || document.hidden || hovering || host.classList.contains('island-menu-clear') || shell.contains(document.activeElement)) return;
     deadline = performance.now() + remaining;
     timer = window.setTimeout(() => {
       timer = 0;
@@ -71,21 +76,59 @@ function initialize(host: HTMLElement) {
     timerAction = action; remaining = delay;
     resumeTimer();
   }
+  function pauseMarquee() { marquee?.pause(); }
+  function resumeMarquee() {
+    if (!reduced.matches && !document.hidden && !hovering && !host.classList.contains('island-menu-clear') && !shell.contains(document.activeElement)) marquee?.play();
+  }
+  function startMarquee() {
+    marquee?.cancel(); marquee = undefined; copy.hidden = true;
+    if (!current || shell.dataset.expanded === 'true' || host.hidden) return;
+    const distance = title.scrollWidth - textWindow.clientWidth;
+    let duration = 0;
+    if (distance > 2 && !reduced.matches) {
+      copy.hidden = false;
+      // Identical, aria-hidden second copy makes the rightward loop seamless.
+      const period = title.scrollWidth + 48;
+      duration = Math.max(10000, period / 36 * 1000);
+      marquee = track.animate([
+        { transform: `translateX(${-period}px)` }, { transform: 'translateX(0)' },
+      ], { duration, delay: 1000, iterations: Infinity, easing: 'linear' });
+      if (hovering || document.hidden || host.classList.contains('island-menu-clear') || shell.contains(document.activeElement)) pauseMarquee();
+    }
+    if (current.kind === 'success') schedule(() => dismiss(false), Math.max(12000, current.duration || 0, duration + 2500));
+  }
+  function updateTicker() {
+    cancelAnimationFrame(tickerFrame);
+    tickerFrame = requestAnimationFrame(startMarquee);
+  }
   function expand(expanded: boolean) {
     if (!current || shell.dataset.expanded === String(expanded)) return;
-    animation?.cancel();
     const before = shell.getBoundingClientRect();
+    animation?.cancel(); marquee?.cancel(); copy.hidden = true;
     shell.dataset.expanded = String(expanded);
     toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-label', expanded ? `${current.title}. Kecilkan notifikasi` : `${labels[current.kind]}. ${current.title}. ${current.message}. Buka detail notifikasi`);
     detail.hidden = !expanded;
-    summary.hidden = expanded;
+    title.textContent = expanded ? current.title : `${current.title} — ${current.message}`;
+    if (expanded) {
+      document.documentElement.dataset.islandExpanded = 'true';
+      shell.style.setProperty('--island-shift', '0px');
+      const bounds = shell.getBoundingClientRect();
+      const shift = bounds.left < 16 ? 16 - bounds.left : bounds.right > document.documentElement.clientWidth - 16 ? document.documentElement.clientWidth - 16 - bounds.right : 0;
+      shell.style.setProperty('--island-shift', `${shift}px`);
+      schedule();
+    } else {
+      delete document.documentElement.dataset.islandExpanded;
+      updateTicker();
+    }
     const after = shell.getBoundingClientRect();
-    // FLIP: commit the layout once, then animate compositor transforms only.
+    const x = before.left + before.width / 2 - after.left - after.width / 2;
+    const y = before.top - after.top;
     animate([
-      { transform: `scale(${before.width / after.width}, ${before.height / after.height})` },
-      { transform: 'scale(1.012, 1.025)', offset: .7 },
-      { transform: 'scale(1, 1)' },
-    ], 440);
+      { transform: `translate(${x}px, ${y}px) scale(${before.width / after.width}, ${before.height / after.height})` },
+      { transform: 'translate(0, 0) scale(1.012, 1.025)', offset: .75 },
+      { transform: 'translate(0, 0) scale(1, 1)' },
+    ], 500);
   }
   function activeNotice() {
     const now = Date.now();
@@ -102,19 +145,22 @@ function initialize(host: HTMLElement) {
   }
   function show(item: Notification) {
     revision++;
+    schedule();
     animation?.cancel();
     current = item;
     host.hidden = false;
-    host.classList.remove('island-focus-clear');
+    header.dataset.islandActive = 'true';
     shell.dataset.kind = item.kind;
-    shell.dataset.expanded = 'true';
-    toggle.setAttribute('aria-expanded', 'true');
+    shell.dataset.expanded = 'false';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', `${labels[item.kind]}. ${item.title}. ${item.message}. Buka detail notifikasi`);
+    delete document.documentElement.dataset.islandExpanded;
     label.textContent = labels[item.kind];
-    title.textContent = item.title;
-    summary.textContent = labels[item.kind];
-    summary.hidden = true;
+    title.textContent = `${item.title} — ${item.message}`;
+    copy.textContent = title.textContent;
+    copy.hidden = true;
     message.textContent = item.message;
-    detail.hidden = false;
+    detail.hidden = true;
     icon.textContent = item.kind === 'success' ? '✓' : item.kind === 'live' ? '●' : item.kind === 'event' ? '↗' : 'i';
     const href = safeHref(item.href);
     link.hidden = !href;
@@ -130,7 +176,7 @@ function initialize(host: HTMLElement) {
       { transform: 'translateY(0) scale(1.02, 1.035)', opacity: 1, offset: .72 },
       { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
     ], 560);
-    schedule(item.kind === 'success' ? () => dismiss(false) : () => expand(false), item.kind === 'success' ? Math.max(10000, item.duration || 12000) : 6500);
+    updateTicker();
   }
   async function dismiss(remember: boolean) {
     if (!current) return;
@@ -144,8 +190,11 @@ function initialize(host: HTMLElement) {
     animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'translateY(-8px) scale(.92, .78)', opacity: 0 }], 220);
     try { await animation?.finished; } catch { /* Interruptions are expected. */ }
     if (version !== revision) return;
+    marquee?.cancel();
     current = undefined; host.hidden = true;
+    delete header.dataset.islandActive;
     delete document.documentElement.dataset.islandActive;
+    delete document.documentElement.dataset.islandExpanded;
     const next = queue.shift() || activeNotice();
     if (next) show(next);
     if (focusedInside) {
@@ -159,29 +208,41 @@ function initialize(host: HTMLElement) {
     if (!current || item.kind === 'success') show(item);
     else if (!queue.some(entry => entry.id === item.id)) queue.push(item);
   });
-  toggle.addEventListener('click', () => { schedule(); expand(shell.dataset.expanded !== 'true'); });
+  toggle.addEventListener('click', () => expand(shell.dataset.expanded !== 'true'));
   close.addEventListener('click', () => { void dismiss(true); });
   shell.addEventListener('keydown', event => {
-    if (event.key === 'Escape') { event.preventDefault(); void dismiss(true); }
-  });
-  shell.addEventListener('pointerenter', () => { hovering = true; pauseTimer(); });
-  shell.addEventListener('pointerleave', () => { hovering = false; resumeTimer(); });
-  shell.addEventListener('focusin', pauseTimer);
-  shell.addEventListener('focusout', () => { queueMicrotask(resumeTimer); });
-  document.addEventListener('visibilitychange', () => document.hidden ? pauseTimer() : resumeTimer());
-  document.addEventListener('focusin', event => {
-    host.classList.remove('island-focus-clear');
-    if (host.hidden || shell.contains(event.target as Node) || !(event.target instanceof HTMLElement)) return;
-    const focus = event.target.getBoundingClientRect();
-    const island = shell.getBoundingClientRect();
-    if (focus.bottom > island.top && focus.top < island.bottom && focus.right > island.left && focus.left < island.right) {
-      host.classList.add('island-focus-clear');
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (shell.dataset.expanded === 'true') expand(false);
+      else void dismiss(true);
     }
   });
-  document.querySelector('details.mobile-menu')?.addEventListener('toggle', event => {
-    host.classList.toggle('island-menu-clear', (event.target as HTMLDetailsElement).open);
+  shell.addEventListener('pointerenter', () => { hovering = true; pauseTimer(); pauseMarquee(); });
+  shell.addEventListener('pointerleave', () => { hovering = false; resumeTimer(); resumeMarquee(); });
+  shell.addEventListener('focusin', () => { pauseTimer(); pauseMarquee(); });
+  shell.addEventListener('focusout', () => { queueMicrotask(() => { resumeTimer(); resumeMarquee(); }); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { pauseTimer(); pauseMarquee(); }
+    else { resumeTimer(); resumeMarquee(); }
   });
-  reduced.addEventListener('change', () => { if (reduced.matches) animation?.cancel(); });
+  document.addEventListener('focusin', event => {
+    if (host.hidden || shell.dataset.expanded !== 'true' || shell.contains(event.target as Node) || !(event.target instanceof HTMLElement)) return;
+    const focus = event.target.getBoundingClientRect();
+    const island = shell.getBoundingClientRect();
+    if (focus.bottom > island.top && focus.top < island.bottom && focus.right > island.left && focus.left < island.right) expand(false);
+  });
+  document.addEventListener('pointerdown', event => {
+    if (current && shell.dataset.expanded === 'true' && !host.contains(event.target as Node)) expand(false);
+  });
+  document.querySelector('details.mobile-menu')?.addEventListener('toggle', event => {
+    const open = (event.target as HTMLDetailsElement).open;
+    if (open && shell.dataset.expanded === 'true') expand(false);
+    host.classList.toggle('island-menu-clear', open);
+    if (open) { pauseTimer(); pauseMarquee(); }
+    else { resumeTimer(); resumeMarquee(); }
+  });
+  reduced.addEventListener('change', () => { animation?.cancel(); updateTicker(); });
+  new ResizeObserver(updateTicker).observe(textWindow);
   function refresh() {
     const active = activeNotice();
     if (!current && active) show(active);
@@ -189,7 +250,7 @@ function initialize(host: HTMLElement) {
   }
   refresh();
   if (approved.length) window.setInterval(refresh, 60000);
-  window.addEventListener('pagehide', () => { pauseTimer(); animation?.cancel(); });
-  window.addEventListener('pageshow', () => { resumeTimer(); refresh(); });
+  window.addEventListener('pagehide', () => { pauseTimer(); pauseMarquee(); animation?.cancel(); cancelAnimationFrame(tickerFrame); });
+  window.addEventListener('pageshow', () => { resumeTimer(); resumeMarquee(); refresh(); });
   // The interval has no network requests; only published schedule boundaries.
 }
