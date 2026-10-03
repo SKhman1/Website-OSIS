@@ -1,0 +1,24 @@
+---
+import { announcements } from '../content/announcements';
+---
+<div class="notification-island" data-notification-island data-announcements={JSON.stringify(announcements)} hidden>
+  <section class="island-shell" data-island-shell data-expanded="true" aria-label="Notifikasi OSIS">
+    <span class="island-icon" data-island-icon aria-hidden="true"></span>
+    <button class="island-toggle" data-island-toggle type="button" aria-expanded="true" aria-controls="island-detail">
+      <span class="island-eyebrow" data-island-label></span>
+      <span class="island-title" data-island-title></span>
+      <span class="island-summary" data-island-summary></span>
+    </button>
+    <button class="island-close" data-island-close type="button" aria-label="Tutup notifikasi">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+    </button>
+    <div class="island-detail" id="island-detail" data-island-detail>
+      <p data-island-message></p>
+      <a class="island-link" data-island-link hidden>Lihat kegiatan <span aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+</div>
+<p class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-island-announcer></p>
+<script>
+  import '../scripts/notifications';
+</script>

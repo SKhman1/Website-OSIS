@@ -1,4 +1,5 @@
 import { validateAspiration, type AspirationField } from '../lib/aspiration-form';
+import { notify } from './notifications';
 
 interface Turnstile {
   render(container: HTMLElement, options: Record<string, unknown>): string;
@@ -111,6 +112,11 @@ function initialize(form: HTMLFormElement) {
         form.reset(); dirty = false; requestId = ''; previousPayload = '';
         counter.textContent = `0 / ${formatter.format(3000)} karakter`;
         status.textContent = 'Terima kasih. Aspirasimu sudah diterima pengurus OSIS.';
+        notify({
+          id: 'aspiration-received', kind: 'success', title: 'Terima kasih atas aspirasimu.',
+          message: 'Suaramu membantu kita membuat SMK Diponegoro 01 lebih baik. Pengurus OSIS sudah menerima masukanmu.',
+          announce: false,
+        });
       } else {
         fields.disabled = false;
         if (receipt.errors) errors(receipt.errors);

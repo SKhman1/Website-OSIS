@@ -176,3 +176,28 @@ and alt text; set `photoIsPlaceholder` to false for real portraits.
 Requested alias classes (`fucknutcard`, `bumassbar`, `boobnavbar`) sit beside
 descriptive classes. One console warning asks people not to tamper or paste
 untrusted code. DevTools remains available and real diagnostic logs still work.
+
+
+## Notification island
+
+`src/components/NotificationIsland.astro` and `src/scripts/notifications.ts`
+provide one fixed capsule below the sticky navbar on every page. A confirmed
+aspiration receipt opens a thank-you message for 12 seconds. Hover, keyboard
+focus, and a hidden browser tab pause its timer. Close/Escape dismiss it.
+The inline form receipt remains available after the capsule closes.
+
+Add approved notices to `src/content/announcements.ts` with a unique `id`,
+`kind` (`live`, `event`, or `info`), `title`, and `message`. Optional `href`
+and `linkLabel` provide a normal link; `startsAt`/`endsAt` use ISO timestamps
+with a Jakarta offset (`+07:00`). Empty configuration renders no notification.
+The browser checks published schedule boundaries once a minute, without
+network polling. Publishing new content requires rebuilding/redeploying; this
+is not an automatic feed or a staff dashboard. A live notice first expands,
+then collapses after 6.5 seconds and stays until dismissed or its schedule ends.
+Dismissed notice IDs last for that browser-tab session. Success receipts take
+priority and restore the active notice afterwards. Other site code can import
+`notify()` to present information through the same component.
+
+Motion animates transform/opacity, supports interruption and reduced-motion
+preferences, and hides the capsule while the mobile menu is open or when it
+would obstruct a focused control. Student messages never appear in the island.

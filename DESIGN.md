@@ -72,3 +72,14 @@ components. Descriptive class names remain alongside them for maintenance.
 The console warning is a joke and self-XSS reminder, not an access control.
 Do not add debugger loops, DevTools detection, disabled keyboard shortcuts,
 blocked context menus, or suppressed logs.
+
+
+## Notification island
+
+One dark capsule floats below the sticky white navbar. Orange marks the status
+and icon; title and detail retain Manrope and the shared spacing scale. It is
+hidden when there is no confirmed receipt or approved active announcement.
+Success, live, event, and information notices share one layout. Entry takes
+560ms, expansion 440ms, exit 220ms; animations use transform/opacity with a
+soft settling curve. Reduced motion skips these movements. Notices support
+keyboard dismissal, hover/focus timer pause, safe areas, and narrow screens.
