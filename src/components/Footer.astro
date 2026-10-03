@@ -1,15 +1,29 @@
 ---
 import Brand from './Brand.astro';
 import { site } from '../content/site';
+import gmail from '../assets/social/gmail.svg?raw';
+import instagram from '../assets/social/instagram.svg?raw';
+import tiktok from '../assets/social/tiktok.svg?raw';
+const contacts = [
+  { name: 'Instagram', handle: '@osis_smkdipo1', href: site.instagram, icon: instagram },
+  { name: 'TikTok', handle: '@osis_smkdipo1', href: 'https://www.tiktok.com/@osis_smkdipo1', icon: tiktok },
+  { name: 'Gmail', handle: 'osissmkdiposatu@gmail.com', href: 'mailto:osissmkdiposatu@gmail.com', icon: gmail },
+];
 ---
 <footer class="site-footer bumassbar">
   <div class="container footer-top">
-    <Brand />
-    <p>Berkarakter. Berkarya. Berteknologi.</p>
-    <a href={site.instagram} target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span><span class="sr-only"> (tab baru)</span></a>
+    <div class="footer-identity" data-motion="reveal"><Brand /><p>Berkarakter. Berkarya. Berteknologi.</p></div>
+    <div class="footer-contact" data-motion="reveal" data-delay="100">
+      <p class="footer-contact-label">Terhubung dengan OSIS SMK Diponegoro 01</p>
+      <ul class="social-links" aria-label="Media sosial dan kontak OSIS">
+        {contacts.map(contact => <li><a class="social-link" href={contact.href} target={contact.name === 'Gmail' ? undefined : '_blank'} rel={contact.name === 'Gmail' ? undefined : 'noopener noreferrer'}>
+          <span class="social-icon" aria-hidden="true" set:html={contact.icon} />
+          <span class="social-copy"><strong>{contact.name}</strong><span>{contact.handle}</span></span>
+          <span class="social-arrow" aria-hidden="true">↗</span>
+          {contact.name !== 'Gmail' && <span class="sr-only"> (tab baru)</span>}
+        </a></li>)}
+      </ul>
+    </div>
   </div>
-  <div class="container footer-bottom">
-    <span>© 2026 {site.name}</span>
-    <span>Kepengurusan {site.term}</span>
-  </div>
+  <div class="container footer-bottom"><span>© {new Date().getFullYear()} {site.name}</span><span data-cms-term="Kepengurusan ">Kepengurusan {site.term}</span></div>
 </footer>

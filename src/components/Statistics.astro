@@ -10,15 +10,14 @@ import { statistics } from '../content/site';
     </header>
     <div class="statistics-grid" data-stats>
       {statistics.map((statistic, index) => (
-        <article class="statistic fucknutcard" data-motion="reveal" data-delay={index * 80}>
+        <article class="statistic fucknutcard" data-cms-stat={['members','programs','activities'][index]} data-motion="reveal" data-delay={index * 80}>
           <p class="statistic-label">{statistic.label}</p>
           <p class="statistic-value">
-            <span class="sr-only">{statistic.value === null ? `Contoh: ${statistic.previewValue}` : statistic.value}</span>
+            <span class="sr-only" data-stat-accessible>{statistic.value === null ? `Contoh: ${statistic.previewValue}` : statistic.value}</span>
             <span data-counter data-value={statistic.value ?? statistic.previewValue} aria-hidden="true">{String(statistic.value ?? statistic.previewValue).padStart(2, '0')}</span>
-            <span class="statistic-plus" aria-hidden="true">+</span>
           </p>
           <p class="statistic-description">{statistic.description}</p>
-          {statistic.value === null && <span class="preview-badge">Angka contoh</span>}
+          <span class="preview-badge" hidden={statistic.value !== null}>Angka contoh</span>
         </article>
       ))}
     </div>

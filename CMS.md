@@ -138,3 +138,16 @@ disposable loopback server; no real passwords or settings are used. This covers
 the asynchronous callback crash that startup-only checks previously missed.
 `scripts/cms-gui-remote-check.py` tests GUI login/read/logout against Cloudflare
 with a temporary editor and removes it afterward, without publishing content.
+
+## Editable cabinet identity and statistics
+
+CMS schema 2 stores `identity` (cabinetName, term, logo, logoAlt) and three nullable
+integer statistics (members, programs, activities). Existing schema 1 documents
+and revisions are normalized on read with original identity defaults; their
+approved people, programs, visions and events are preserved. Legacy GUI writes
+are rejected with an upgrade message so old clients cannot reset new settings.
+No remote seed replacement or account migration is required.
+Cabinet logos use the existing authenticated media upload, draft privacy and
+publication checks. Zero is valid; null remains explicitly labelled preview data.
+Social contacts are lightweight local SVGs from Simple Icons (CC0):
+https://github.com/simple-icons/simple-icons; no third-party embed or tracking script.

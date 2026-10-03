@@ -14,7 +14,7 @@ class MemorySettings:
     def setValue(self, key, value): self.values[key] = value
 
 def begin_login_check(app, window):
-    content = dict(schemaVersion=1, vision='Disposable GUI HTTP test', missions=['Test only'], people=[], departments=[], programs=[], events=[])
+    content = dict(schemaVersion=2, identity=dict(cabinetName='Disposable Council',term='2026/2027',logo='/images/brand/cabinet-default.webp',logoAlt='QA logo'), statistics=dict(members=None,programs=0,activities=12), vision='Disposable GUI HTTP test', missions=['Test only'], people=[], departments=[], programs=[], events=[])
     password = 'Only a disposable local GUI test password.'
     token = 'a' * 64
     class Handler(BaseHTTPRequestHandler):
@@ -58,7 +58,10 @@ def begin_login_check(app, window):
                 assert not window.publish_button.isEnabled() and window.isVisible()
                 window.load_content()
             elif step==2:
-                assert window.content['vision']==content['vision'];window.nav.setCurrentRow(5)
+                assert window.content['vision']==content['vision']
+                window.nav.setCurrentRow(5); assert window.editor.fields['cabinetName'][0].text()=='Disposable Council'
+                window.nav.setCurrentRow(6); assert window.editor.value()['programs']==0 and window.editor.value()['members'] is None
+                window.nav.setCurrentRow(7)
             elif step==3:
                 assert window.history==[];window.logout()
             elif step==4:

@@ -2,4 +2,4 @@
 interface Props { number: string; label: string; }
 const { number, label } = Astro.props;
 ---
-<p class="section-label"><span class="section-number" aria-hidden="true">{number}</span><span>{label}</span></p>
+<p class="section-label"><span class="section-number" aria-hidden="true">{number}</span><span data-cms-term={label.includes('2026/2027') ? label.split('2026/2027')[0] : undefined}>{label}</span></p>

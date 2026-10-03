@@ -36,7 +36,10 @@ try:
             elif step==1:
                 assert window.root.currentIndex()==1 and len(window.content['departments'])==10 and window.isVisible()
                 window.load_content()
-            elif step==2:window.nav.setCurrentRow(5)
+            elif step==2:
+                window.nav.setCurrentRow(5);assert window.editor.fields['cabinetName'][0].text()==window.content['identity']['cabinetName']
+                window.nav.setCurrentRow(6);assert window.editor.value()==window.content['statistics']
+                window.nav.setCurrentRow(7)
             elif step==3:
                 assert isinstance(window.history,list);window.logout()
             else:

@@ -15,6 +15,7 @@ function page(file,path){
   return {window,document:window.document,render:result.renderContent};
 }
 const c=structuredClone(seed);
+c.identity={cabinetName:'Angkatan <baru>',term:'2027/2028',logo:'/api/media/11111111-1111-4111-8111-111111111111.webp',logoAlt:'Logo baru'};c.statistics={members:0,programs:17,activities:null};
 c.vision='<img src=x onerror=alert(1)>';c.people.find(p=>p.id==='ketua').name='Updated Ketua';
 c.events=[{id:'qa-event',title:'QA Event',description:'Offline only',date:'2026-10-03',location:'Aula',start:'07:00',end:'08:00',notify:true,rundown:[{start:'07:00',end:'07:30',agenda:'Registrasi',location:'Aula'}]}];
 let p=page('index.html','/');let notices;p.window.addEventListener('osis:announcements',event=>notices=event.detail);p.render(c);
@@ -23,6 +24,18 @@ assert.equal(p.document.querySelectorAll('[data-cms-people="core"] a').length,4)
 assert.equal(p.document.querySelectorAll('[data-cms-departments] .department-card').length,4);
 assert.match(p.document.querySelector('[data-cms-events]').textContent,/07:00–07:30 WIB/);
 assert.equal(notices.length,1);assert.equal(JSON.parse(p.document.querySelector('[data-notification-island]').dataset.announcements).length,1);
+assert.equal(p.document.querySelector('[data-cms-cabinet]').textContent,c.identity.cabinetName);
+assert.equal(p.document.querySelector('#hero-title img'),null);
+assert.match(p.document.querySelector('.school-photo-term').textContent,/2027\/2028/);
+assert.equal(p.document.querySelector('[data-cms-logo]').getAttribute('src'),c.identity.logo);
+assert.ok(p.document.querySelector('.brand-logo-custom'));
+assert.equal(p.document.querySelector('[data-cms-stat="members"] [data-counter]').dataset.value,'0');
+assert.equal(p.document.querySelector('[data-cms-stat="members"] .preview-badge').hidden,true);
+assert.equal(p.document.querySelector('[data-cms-stat="activities"] .preview-badge').hidden,false);
+assert.equal(p.document.querySelector('[data-cms-stat="programs"] [data-stat-accessible]').textContent,'17');
+assert.deepEqual([...p.document.querySelectorAll('.social-link')].map(a=>a.href),['https://www.instagram.com/osis_smkdipo1/','https://www.tiktok.com/@osis_smkdipo1','mailto:osissmkdiposatu@gmail.com']);
+assert.equal(p.document.querySelectorAll('.social-icon svg').length,3);
+console.log('PASS published identity, term, logo, zero/statistic verification, escaped name and contact logos');
 console.log('PASS homepage content, four core cards, four bidang previews, rundown and notification feed; text stays escaped');
 p=page('anggota/profil-template/index.html','/anggota/pembina/new-advisor');
 c.people.push({...c.people[0],id:'new-advisor',group:'advisor',name:'Pembina Baru',classLabel:'',programIds:[],results:[]});p.render(c);

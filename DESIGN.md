@@ -117,3 +117,13 @@ subtle transform/opacity entry. The main vision/mission appears on the homepage;
 individual and department pages focus on people, planned work, and real results.
 Plans never appear as completed work. Missing rosters/results use honest empty
 states. Source and cadence decisions are recorded in CONTENT-SOURCES.md.
+
+## Identity settings and social motion
+
+Cabinet name, logo, academic year and verified section 02 counts come from the
+published CMS document. A null count keeps its example label; 0 is an exact count,
+without a plus suffix. Updated counts retain the matrix entrance when in view.
+Footer contacts use Gmail, Instagram and TikTok SVG logos, keyboard focus and
+responsive wrapping. Corporate motion follows the LottieFiles skill: small
+2px card lift, secondary icon/arrow movement, pale orange surface response,
+100ms press and 240ms settling, with movement disabled for reduced motion.

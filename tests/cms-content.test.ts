@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateContent, type CmsContent } from '../src/lib/cms-content';
+import { validateContent, contentPhotos, defaultIdentity, defaultStatistics, type CmsContent } from '../src/lib/cms-content';
 import { verifyPassword, passwordHash, handleCms, publicContent } from '../src/server/cms';
 import { validateWebp } from '../src/server/cms-media';
-const seed:CmsContent={schemaVersion:1,vision:'Visi sekolah',missions:['Misi sekolah'],events:[],programs:[{id:'program-1',title:'Program',description:'Deskripsi',frequency:'Bulanan',details:[],goals:[]}],
+const seed:CmsContent={schemaVersion:2,identity:defaultIdentity,statistics:defaultStatistics,vision:'Visi sekolah',missions:['Misi sekolah'],events:[],programs:[{id:'program-1',title:'Program',description:'Deskripsi',frequency:'Bulanan',details:[],goals:[]}],
   people:['ketua','wakil-ketua','sekretaris','bendahara'].map(id=>({id,group:'core',role:id,name:null,classLabel:'',introduction:'Perkenalan',photo:'/_astro/test.webp',photoAlt:'Foto',photoIsPlaceholder:true,programIds:[],results:[]})),
   departments:Array.from({length:10},(_,i)=>{const number=String(i+1).padStart(2,'0');return {id:`sekbid-${number}`,number,name:`Bidang ${number}`,description:'Deskripsi',photo:'/_astro/test.webp',photoAlt:'Foto',photoIsPlaceholder:true,memberIds:[],programIds:[],results:[]};})};
 test('content preserves all four core roles and ten fields; rejects unknown fields and external images',()=>{
@@ -34,4 +34,15 @@ test('photo container rejects large dimensions, animation, malformed sizes and a
   for(const change of [(b:Buffer)=>b.writeUInt16LE(2000,26),(b:Buffer)=>b.write('ANIM',12),(b:Buffer)=>b.writeUInt32LE(999,4),(b:Buffer)=>b.write('EXIF',12)]){
     const invalid=Buffer.from(image);change(invalid);assert.throws(()=>validateWebp(invalid));
   }
+});
+
+test('legacy drafts and revisions gain settings while preserving school content',()=>{
+  const {identity,statistics,...old}=structuredClone(seed); const normalized=validateContent({...old,schemaVersion:1});
+  assert.deepEqual(normalized.identity,defaultIdentity);assert.deepEqual(normalized.statistics,defaultStatistics);
+  assert.deepEqual(normalized.people,old.people); assert.deepEqual(validateContent(normalized),normalized);
+});
+test('identity and statistics validate boundaries and include cabinet logo in publication media',()=>{
+  const c=structuredClone(seed);c.statistics={members:0,programs:99999,activities:null};c.identity.logo='/api/media/11111111-1111-4111-8111-111111111111.webp';
+  assert.equal(validateContent(c).statistics.members,0);assert.ok(contentPhotos(validateContent(c)).has(c.identity.logo));
+  for(const mutate of [c=>{c.identity.term='2026/2028';},c=>{c.identity.logo='https://evil.test/logo.svg';},c=>{c.statistics.members=-1;},c=>{c.statistics.programs=1.5;},c=>{c.statistics.activities='2';},c=>{delete c.identity;},c=>{c.identity.secret='no';}] as ((c:any)=>void)[]){const bad=structuredClone(c);mutate(bad);assert.throws(()=>validateContent(bad));}
 });

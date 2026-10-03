@@ -587,3 +587,29 @@ button:disabled { background: #dde1d9; color: #596058; cursor: not-allowed; }
 
 /* Keep the security widget and form controls within narrow screens. */
 .aspiration-layout > *, .aspiration-form fieldset { min-width: 0; }
+
+/* Cabinet uploads have their own square frame; the approved original has margins. */
+.brand-cabinet-frame.brand-logo-custom img { position: static; max-width: 100%; width: 100%; height: 100%; object-fit: contain; }
+.brand-name small { overflow-wrap: anywhere; }
+.school-hero h1 { overflow-wrap: anywhere; }
+.footer-top { align-items: flex-start; flex-wrap: wrap; }
+.footer-identity { flex: 1 1 20rem; }
+.footer-identity > p { margin-top: var(--space-4); font-size: .8rem; color: var(--color-muted); }
+.footer-contact { flex: 1 1 28rem; max-width: 38rem; min-width: 0; }
+.footer-contact-label { font-size: .8rem; font-weight: 650; margin-bottom: var(--space-4); }
+.social-links { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.social-links li { flex: 1 1 14rem; min-width: 0; }
+.social-link { display: flex; gap: var(--space-3); align-items: center; min-height: 4.5rem; padding: var(--space-4); border: 1px solid var(--color-line); border-radius: .75rem; background: var(--color-paper); transition: transform var(--motion-quick) var(--motion-ease), border-color var(--motion-quick) var(--motion-ease), background-color var(--motion-quick) var(--motion-ease); }
+.social-icon { display: grid; place-items: center; flex: 0 0 1.4rem; transition: transform 240ms var(--motion-ease); }
+.social-icon svg { display: block; width: 1.4rem; height: 1.4rem; fill: currentColor; }
+.social-copy { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.social-copy strong { font-size: .8rem; font-weight: 650; }
+.social-copy > span { font-size: .65rem; color: var(--color-muted); overflow-wrap: anywhere; }
+.social-arrow { margin-left: auto; color: var(--color-brand-text); transition: transform 240ms var(--motion-ease); }
+.social-link:focus-visible { background: var(--color-brand-soft); }
+@media (hover: hover) { .social-link:hover { transform: translateY(-2px); border-color: var(--color-brand); background: var(--color-brand-soft); } .social-link:hover .social-icon { transform: rotate(-4deg); } .social-link:hover .social-arrow { transform: translate(2px, -2px); } }
+.social-link:active { transform: scale(.98); transition-duration: 100ms; }
+@media (max-width: 760px) { .footer-identity, .footer-contact { flex-basis: auto; width: 100%; max-width: none; } }
+@media (prefers-reduced-motion: reduce) { .social-link, .social-icon, .social-arrow { transition: none; } .social-link:hover, .social-link:active, .social-link:hover .social-icon, .social-link:hover .social-arrow { transform: none; } }
+
+.preview-badge[hidden], .statistics-note[hidden] { display: none; }

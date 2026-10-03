@@ -103,8 +103,8 @@ export async function handleCms(request: Request, env: CmsEnv): Promise<Response
     if (path==='/api/manage/logout' && request.method==='POST') {
       await db.prepare('DELETE FROM cms_sessions WHERE token_hash=?').bind(hash(request.headers.get('authorization')!.slice(7))).run(); return json({ok:true});
     }
-    if (path==='/api/manage/content' && request.method==='GET') { const s=await state(db); return json({ok:true,version:s.version,publishedVersion:s.published_version,content:JSON.parse(s.draft)}); }
-    if (path==='/api/manage/content' && request.method==='PUT') { const data=await body(request); const value=content(data.content); await mediaExist(value,env); return await mutate(db,user,version(data.version),'save',value); }
+    if (path==='/api/manage/content' && request.method==='GET') { const s=await state(db); return json({ok:true,version:s.version,publishedVersion:s.published_version,content:content(JSON.parse(s.draft))}); }
+    if (path==='/api/manage/content' && request.method==='PUT') { const data=await body(request); if ((data.content as {schemaVersion?:number})?.schemaVersion !== 2) error(409,'Perbarui aplikasi desktop sebelum menyimpan pengaturan.'); const value=content(data.content); await mediaExist(value,env); return await mutate(db,user,version(data.version),'save',value); }
     if (path==='/api/manage/publish' && request.method==='POST') {
       if (user.role!=='owner') error(403,'Hanya pemilik yang dapat menerbitkan konten.');
       const data=await body(request,1024); const s=await state(db); await mediaExist(content(JSON.parse(s.draft)),env); return await mutate(db,user,version(data.version),'publish');

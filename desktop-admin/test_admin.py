@@ -70,6 +70,14 @@ class Tests(unittest.TestCase):
         window.loaded({'content': copy.deepcopy(self.seed), 'version': 0, 'publishedVersion': 0}); window.lock()
         self.assertIsNone(window.content); self.assertEqual(window.client.token, ''); self.assertIsNone(window.editor); self.assertEqual(window.items.count(), 0)
         self.assertEqual(window.scroll.widget().findChildren(type(window.password)), []); window.close()
+    def test_branding_and_statistics_preserve_zero_null_and_other_content(self):
+        window = Window(self.root); window.client = Client('https://example.com'); window.client.user = {'username':'qa','role':'owner'}
+        window.loaded({'content':copy.deepcopy(self.seed),'version':0,'publishedVersion':0})
+        window.navigate(5); window.editor.fields['cabinetName'][0].setText('Angkatan Baru'); window.mark_dirty()
+        window.navigate(6); window.editor.fields['members'][0].setText('0'); window.editor.fields['programs'][0].setText('17'); window.mark_dirty(); window.apply_form()
+        self.assertEqual(window.content['identity']['cabinetName'],'Angkatan Baru')
+        self.assertEqual(window.content['statistics'],dict(members=0,programs=17,activities=None))
+        self.assertEqual(window.content['people'],self.seed['people']); window.dirty=window.form_dirty=False; window.close()
     def test_worker_success_and_failure_arrive_on_gui_thread(self):
         window = Window(self.root); gui_thread = threading.get_ident()
         for raises in (False, True):

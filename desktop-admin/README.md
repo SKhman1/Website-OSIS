@@ -103,3 +103,12 @@ Uji paket Windows dapat dijalankan dengan `VND-Console.exe --self-test`.
 Tes ini menjalankan alur login, memuat konten, riwayat, logout, penolakan password,
 dan percobaan ulang lewat server lokal sementara. Tidak menggunakan akun asli,
 mengubah pengaturan tersimpan, atau menerbitkan konten.
+Identitas angkatan dan statistik dapat diubah melalui menu **Identitas angkatan**
+dan **Statistik beranda**. Isi nama angkatan, tahun ajaran berurutan (misalnya
+2027/2028), unggah logo angkatan, lalu isi angka yang sudah dikonfirmasi.
+Angka kosong berarti belum dikonfirmasi; angka 0 tetap ditampilkan sebagai 0.
+Pilih **Simpan draft ke server**, periksa **Preview publikasi**, lalu
+**Publikasikan**. Website mengikuti perubahan dalam sekitar 30 detik tanpa build.
+Logo OSIS resmi tetap terpisah dari logo angkatan. Logo PNG transparan berbentuk
+persegi dianjurkan; preview tersedia sebelum publikasi. Gunakan versi GUI terbaru
+untuk menyimpan pengaturan ini; versi lama akan diminta diperbarui.

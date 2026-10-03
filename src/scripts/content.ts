@@ -4,7 +4,7 @@ import type { Announcement } from '../content/announcements';
 // Public content only. No administrator token or private endpoints in this bundle.
 let version = -1;
 let loading = false;
-const term = '2026/2027';
+
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag); if(className) node.className=className; if(text!==undefined) node.textContent=text; return node;
 }
@@ -58,6 +58,24 @@ function photoUpdate(root: Element, source: string, alt: string, placeholder: bo
   const caption=root.querySelector<HTMLElement>('figcaption');if(caption)caption.hidden=!placeholder;
 }
 export function renderContent(content: CmsContent) {
+  const {cabinetName,term,logo,logoAlt}=content.identity;
+  document.querySelectorAll('[data-cms-cabinet]').forEach(node=>node.textContent=cabinetName);
+  document.querySelectorAll<HTMLElement>('[data-cms-term]').forEach(node=>node.textContent=`${node.dataset.cmsTerm}${term}`);
+  document.querySelectorAll('[data-cms-cabinet-term]').forEach(node=>node.textContent=`${cabinetName} · ${term}`);
+  const hero=document.querySelector('#hero-title');
+  if(hero){const words=cabinetName.split(/\s+/);hero.replaceChildren(document.createTextNode(words.shift()??''),el('br'),el('span','',words.join(' ')));}
+  document.querySelectorAll<HTMLImageElement>('[data-cms-logo]').forEach(img=>{img.removeAttribute('srcset');img.src=logo;img.alt=logoAlt;img.closest('.brand-cabinet-frame')?.classList.toggle('brand-logo-custom',logo!=='/images/brand/cabinet-default.webp');});
+  let statsChanged=false;
+  for(const [key,preview] of [['members',24],['programs',8],['activities',12]] as const){
+    const node=document.querySelector<HTMLElement>(`[data-cms-stat="${key}"]`);if(!node)continue;
+    const value=content.statistics[key], target=value??preview, counter=node.querySelector<HTMLElement>('[data-counter]');
+    if(counter){if(counter.dataset.value!==String(target)){statsChanged=true;counter.dataset.value=String(target);}if(node.closest<HTMLElement>('[data-stats]')?.dataset.counterState!=='running')counter.textContent=String(target).padStart(2,'0');}
+    const accessible=node.querySelector('[data-stat-accessible]');if(accessible)accessible.textContent=value===null?`Contoh: ${preview}`:String(value);
+    const badge=node.querySelector<HTMLElement>('.preview-badge');if(badge)badge.hidden=value!==null;
+  }
+  const note=document.querySelector<HTMLElement>('.statistics-note');if(note){note.hidden=Object.values(content.statistics).every(value=>value!==null);note.textContent=`Angka contoh untuk pratinjau desain. Data resmi kepengurusan ${term} akan diperbarui setelah dikonfirmasi.`;}
+  if(statsChanged)window.dispatchEvent(new CustomEvent('osis:statistics'));
+
   document.querySelectorAll('[data-cms-vision]').forEach(node=>node.textContent=content.vision);
   document.querySelectorAll('[data-cms-missions]').forEach(node=>node.replaceChildren(...content.missions.map(m=>el('li','',m))));
   document.querySelectorAll<HTMLElement>('[data-cms-people]').forEach(node=>node.replaceChildren(...content.people.filter(p=>p.group===node.dataset.cmsPeople).map(p=>card(p,node.dataset.cmsHeading))));
@@ -87,7 +105,7 @@ export function renderContent(content: CmsContent) {
   }
   const departmentRoot=document.querySelector<HTMLElement>('[data-cms-department]');
   if(departmentRoot){const d=content.departments.find(d=>d.id===departmentRoot.dataset.cmsDepartment);
-    if(d){const title=departmentRoot.querySelector('#profile-title');if(title)title.textContent=d.name;const intro=departmentRoot.querySelector('.profile-introduction');if(intro)intro.textContent=d.description;
+    if(d){const label=departmentRoot.querySelector('.profile-hero .section-label span:last-child');if(label)label.textContent=`Seksi bidang ${d.number} · ${term}`;const title=departmentRoot.querySelector('#profile-title');if(title)title.textContent=d.name;const intro=departmentRoot.querySelector('.profile-introduction');if(intro)intro.textContent=d.description;
       const photo=departmentRoot.querySelector('.profile-photo');if(photo)photoUpdate(photo,d.photo,d.photoAlt,d.photoIsPlaceholder);
       const work=departmentRoot.querySelector('[data-cms-programs]');if(work)work.replaceChildren(programs(d.programIds,content));
       const result=departmentRoot.querySelector('[data-cms-results]');if(result)result.replaceChildren(results(d.results));

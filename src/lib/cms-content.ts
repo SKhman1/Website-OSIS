@@ -14,8 +14,12 @@ export interface CmsEvent {
   id: string; title: string; description: string; date: string; location: string;
   start: string; end: string; rundown: CmsRundown[]; notify: boolean;
 }
+export interface CmsIdentity { cabinetName: string; term: string; logo: string; logoAlt: string; }
+export interface CmsStatistics { members: number | null; programs: number | null; activities: number | null; }
+export const defaultIdentity: CmsIdentity = { cabinetName: 'Vimsati Natta Darsa', term: '2026/2027', logo: '/images/brand/cabinet-default.webp', logoAlt: 'Logo angkatan OSIS SMK Diponegoro 01' };
+export const defaultStatistics: CmsStatistics = { members: null, programs: null, activities: null };
 export interface CmsContent {
-  schemaVersion: 1; vision: string; missions: string[];
+  schemaVersion: 2; identity: CmsIdentity; statistics: CmsStatistics; vision: string; missions: string[];
   people: CmsPerson[]; departments: CmsDepartment[]; programs: CmsProgram[]; events: CmsEvent[];
 }
 export const idPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -44,7 +48,7 @@ function identifier(value: unknown): string {
 function strings(value: unknown, max = 30, length = 1200): string[] { return list(value, max, item => text(item, 'Teks', length)); }
 function ids(value: unknown): string[] { return list(value, 50, identifier); }
 function boolean(value: unknown): boolean { if (typeof value !== 'boolean') fail('Nilai pilihan tidak valid.'); return value; }
-function photo(value: unknown): string { const result = text(value, 'Foto', 200); if (!localPhoto.test(result)) fail('Foto harus berasal dari aset website.'); return result; }
+function photo(value: unknown): string { const result = text(value, 'Foto', 200); if (result !== defaultIdentity.logo && !localPhoto.test(result)) fail('Foto harus berasal dari aset website.'); return result; }
 function date(value: unknown): string {
   const result = text(value, 'Tanggal', 10);
   if (!datePattern.test(result) || new Date(`${result}T00:00:00Z`).toISOString().slice(0, 10) !== result) fail('Tanggal tidak valid.'); return result;
@@ -58,8 +62,18 @@ function results(value: unknown): CmsResult[] {
 }
 function unique(items: {id: string}[], name: string) { if (new Set(items.map(item => item.id)).size !== items.length) fail(`ID ${name} tidak boleh sama.`); }
 export function validateContent(value: unknown): CmsContent {
-  const c = object(value, ['schemaVersion','vision','missions','people','departments','programs','events']);
-  if (c.schemaVersion !== 1) fail('Versi format tidak didukung.');
+  const c = object(value, ['schemaVersion','identity','statistics','vision','missions','people','departments','programs','events']);
+  if (c.schemaVersion !== 1 && c.schemaVersion !== 2) fail('Versi format tidak didukung.');
+  // Stored v1 documents and historical revisions retain their approved content.
+  // Only missing v1 settings receive the original defaults; v2 writes are strict.
+  if (c.schemaVersion === 1 && ('identity' in c || 'statistics' in c)) fail('Format pengaturan tidak valid.');
+  const i = object(c.schemaVersion === 1 ? defaultIdentity : c.identity, ['cabinetName','term','logo','logoAlt']);
+  const term = text(i.term, 'Tahun ajaran', 9);
+  if (!/^\d{4}\/\d{4}$/.test(term) || Number(term.slice(5)) !== Number(term.slice(0,4)) + 1) fail('Tahun ajaran harus berurutan, misalnya 2026/2027.');
+  const identity = {cabinetName: text(i.cabinetName,'Nama angkatan',80), term, logo: photo(i.logo), logoAlt: text(i.logoAlt,'Deskripsi logo',250)};
+  const st = object(c.schemaVersion === 1 ? defaultStatistics : c.statistics, ['members','programs','activities']);
+  function count(value: unknown): number | null { if (value === null) return null; if (!Number.isSafeInteger(value) || Number(value)<0 || Number(value)>99999) fail('Jumlah harus bilangan bulat 0–99999 atau belum dikonfirmasi.'); return Number(value); }
+  const statistics = {members: count(st.members), programs: count(st.programs), activities: count(st.activities)};
   const programs = list(c.programs, 100, item => {
     const p = object(item, ['id','title','description','frequency','details','goals']);
     return {id: identifier(p.id), title: text(p.title,'Judul',160), description: text(p.description,'Deskripsi',3000), frequency: text(p.frequency,'Frekuensi',100), details: strings(p.details), goals: strings(p.goals)};
@@ -93,10 +107,10 @@ export function validateContent(value: unknown): CmsContent {
   if (people.some(p => reserved.includes(p.id))) fail('ID ini dipakai direktori.');
   for (const item of [...people,...departments]) if (item.programIds.some(id => !programs.some(p => p.id === id))) fail('Program yang dirujuk tidak ditemukan.');
   for (const d of departments) if (d.memberIds.some(id => !people.some(p => p.id === id && p.group === 'member'))) fail('Anggota bidang harus dari kelompok anggota.');
-  return {schemaVersion: 1, vision: text(c.vision,'Visi',3000), missions: strings(c.missions,30), people, departments, programs, events};
+  return {schemaVersion: 2, identity, statistics, vision: text(c.vision,'Visi',3000), missions: strings(c.missions,30), people, departments, programs, events};
 }
 export function contentPhotos(content: CmsContent): Set<string> {
   const items = [...content.people, ...content.departments];
-  return new Set(items.flatMap(item => [item.photo, ...item.results.flatMap(result => result.photo ? [result.photo] : [])]));
+  return new Set([content.identity.logo, ...items.flatMap(item => [item.photo, ...item.results.flatMap(result => result.photo ? [result.photo] : [])])]);
 }
 export function personPath(person: CmsPerson) { return person.group === 'advisor' ? `/anggota/pembina/${person.id}` : `/anggota/${person.id}`; }

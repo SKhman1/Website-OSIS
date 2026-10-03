@@ -27,13 +27,15 @@ check((await call('/api/manage/content','PUT',{version:version-1,content:c},owne
 const seed=JSON.parse(fs.readFileSync('dist-pages/content-seed.json','utf8'));const originalPath=seed.people[0].photo;
 const webp=fs.readFileSync('dist-pages'+originalPath);
 const upload=await fetch(base+'/api/manage/media',{method:'POST',headers:{Authorization:`Bearer ${owner}`,'Content-Type':'image/webp'},body:webp});const media=await upload.json();check(upload.status===200,'validated WebP upload succeeds');
-c.people[0].photo=media.path;c.people[0].photoIsPlaceholder=false;
+c.identity.logo=media.path;c.identity.cabinetName='LOCAL QA CABINET';c.identity.term='2027/2028';c.statistics={members:0,programs:17,activities:null};
 version=(await call('/api/manage/content','PUT',{version,content:c},owner)).result.version;
 check((await fetch(base+media.path)).status===404,'draft photo is private');
 check((await fetch(base+media.path,{headers:{Authorization:`Bearer ${owner}`}})).status===200,'authenticated draft photo preview works');
 const published=await call('/api/manage/publish','POST',{version},owner);check(published.response.status===200,'owner publication succeeds');version=published.result.version;
 check((await call('/api/content')).result.content.vision===c.vision,'published content updates public API without a build');
-check((await fetch(base+media.path)).status===200,'only published photo is publicly served');
+check((await fetch(base+media.path)).status===200,'only published cabinet logo is publicly served');
+const identity=(await call('/api/content')).result.content;check(identity.identity.cabinetName===c.identity.cabinetName && identity.identity.term==='2027/2028' && identity.statistics.members===0 && identity.statistics.activities===null,'published identity and zero/null counts persist');
+const {identity:discardIdentity,statistics:discardStats,...legacy}=c;check((await call('/api/manage/content','PUT',{version,content:{...legacy,schemaVersion:1}},owner)).response.status===409,'old GUI cannot silently reset identity and counts');
 const updated=(await call('/api/manage/content','GET',undefined,owner)).result.content;
 updated.people.push({...updated.people[0],id:'qa-advisor-profile',group:'advisor',name:'LOCAL QA ONLY',programIds:[],results:[]});
 version=(await call('/api/manage/content','PUT',{version,content:updated},owner)).result.version;

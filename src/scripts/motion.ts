@@ -142,3 +142,16 @@ document.querySelector('.mobile-menu')?.addEventListener('click', event => {
     document.querySelector<HTMLDetailsElement>('.mobile-menu')?.removeAttribute('open');
   }
 });
+
+// Published counts settle onto new values without replaying on every poll.
+window.addEventListener('osis:statistics', () => {
+  cancelAnimationFrame(counterFrame); finishCounters?.();
+  document.querySelectorAll<HTMLElement>('[data-stats]').forEach(group => {
+    const seen=Boolean(group.dataset.counterState);
+    if(!seen)return;
+    delete group.dataset.counterState;
+    const rect=group.getBoundingClientRect();
+    if(!preference.matches && rect.bottom>0 && rect.top<window.innerHeight)animateStatistics(group);
+    else {group.dataset.counterState='done';group.querySelectorAll<HTMLElement>('[data-counter]').forEach(node=>node.textContent=String(Number(node.dataset.value)).padStart(2,'0'));}
+  });
+});

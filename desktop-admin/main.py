@@ -6,8 +6,8 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from PySide6.QtCore import Qt, Signal, QSettings, QTimer
-from PySide6.QtGui import QFont, QCloseEvent, QPixmap
+from PySide6.QtCore import Qt, Signal, QSettings, QTimer, QLocale
+from PySide6.QtGui import QFont, QCloseEvent, QPixmap, QIntValidator
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QPlainTextEdit, QFormLayout, QListWidget, QStackedWidget, QScrollArea, QComboBox, QCheckBox,
     QDialog, QDialogButtonBox, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem, QHeaderView, QFrame)
@@ -99,6 +99,8 @@ class RowsEditor(QWidget):
         if row >= 0: self.table.removeRow(row); self.changed.emit()
 
 FIELDS = {
+    "settings": [("cabinetName", "Nama angkatan OSIS", "text"), ("term", "Tahun ajaran (contoh: 2026/2027)", "text"), ("logo", "Logo angkatan (logo OSIS resmi tetap)", "photo"), ("logoAlt", "Deskripsi logo", "text")],
+    "statistics": [("members", "Jumlah anggota OSIS", "count"), ("programs", "Jumlah program kerja", "count"), ("activities", "Jumlah kegiatan", "count")],
     "people": [("id", "ID profil", "id"), ("group", "Kelompok", "group"), ("role", "Peran", "text"), ("name", "Nama", "nullable"), ("classLabel", "Kelas", "text"), ("introduction", "Perkenalan", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("programIds", "Program kerja (satu ID per baris)", "lines"), ("results", "Hasil kerja", "results")],
     "departments": [("id", "ID bidang", "id"), ("number", "Nomor bidang", "text"), ("name", "Nama bidang", "text"), ("description", "Deskripsi", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("memberIds", "Anggota (satu ID profil per baris)", "lines"), ("programIds", "Program kerja (satu ID per baris)", "lines"), ("results", "Hasil kerja", "results")],
     "programs": [("id", "ID program", "id"), ("title", "Judul", "text"), ("frequency", "Frekuensi", "text"), ("description", "Deskripsi", "long"), ("details", "Pelaksanaan (satu langkah per baris)", "lines"), ("goals", "Tujuan (satu tujuan per baris)", "lines")],
@@ -124,8 +126,10 @@ class Editor(QWidget):
                 columns = [("start", "Mulai"), ("end", "Selesai"), ("agenda", "Agenda"), ("location", "Lokasi")] if mode == "rundown" else [("id", "ID hasil"), ("title", "Judul"), ("description", "Deskripsi"), ("date", "Tanggal"), ("photo", "Foto (opsional)"), ("photoAlt", "Deskripsi foto")]
                 widget = RowsEditor(columns, value or []); widget.changed.connect(self.changed.emit)
             else:
-                widget = QLineEdit(str(value or "")); widget.setReadOnly(mode == "id" and existing); widget.textEdited.connect(self.changed.emit)
+                widget = QLineEdit("" if value is None else str(value)); widget.setReadOnly(mode == "id" and existing); widget.textEdited.connect(self.changed.emit)
                 if kind == "departments" and key == "number": widget.setReadOnly(True)
+                if mode == "count":
+                    validator = QIntValidator(0, 99999, widget); locale = QLocale.c(); locale.setNumberOptions(QLocale.NumberOption.RejectGroupSeparator); validator.setLocale(locale); widget.setValidator(validator); widget.setPlaceholderText("Kosong = belum dikonfirmasi; 0 = tidak ada")
             self.fields[key] = (widget, mode)
             if mode == "photo":
                 container = QWidget(); row = QHBoxLayout(container); row.setContentsMargins(0, 0, 0, 0); row.addWidget(widget)
@@ -172,6 +176,7 @@ class Editor(QWidget):
                 if mode == "lines": value = [line.strip() for line in value.splitlines() if line.strip()]
             else: value = widget.text().strip()
             if mode == "nullable" and not value: value = None
+            if mode == "count": value = int(value) if value else None
             data[key] = value
         return data
 
@@ -233,7 +238,7 @@ class Window(QMainWindow):
         sidebar = QFrame(); sidebar.setObjectName("sidebar"); sidebar.setFixedWidth(240); side = QVBoxLayout(sidebar); side.setContentsMargins(20, 26, 20, 24)
         side.addWidget(label("VND Console", "title")); side.addWidget(label("OSIS SMK Diponegoro 01", "subtle"))
         self.user_label = label("", "subtle"); side.addWidget(self.user_label)
-        self.nav = QListWidget(); self.nav.addItems(["Visi & misi", "Pengurus & pembina", "Seksi bidang", "Program kerja", "Kegiatan & rundown", "Riwayat perubahan"]); self.nav.currentRowChanged.connect(self.navigate); side.addWidget(self.nav)
+        self.nav = QListWidget(); self.nav.addItems(["Visi & misi", "Pengurus & pembina", "Seksi bidang", "Program kerja", "Kegiatan & rundown", "Identitas angkatan", "Statistik beranda", "Riwayat perubahan"]); self.nav.currentRowChanged.connect(self.navigate); side.addWidget(self.nav)
         self.nav.setWordWrap(True)
         side.addWidget(button("Ganti password…", self.change_password)); side.addWidget(button("Keluar", self.logout)); outer.addWidget(sidebar)
         body = QWidget(); layout = QVBoxLayout(body); layout.setContentsMargins(28, 24, 28, 24)
@@ -285,18 +290,22 @@ class Window(QMainWindow):
         if not self.editor: return
         value = self.editor.value()
         if self.kind == "identity": self.content.update(value)
+        elif self.kind == "settings": self.content["identity"] = value
+        elif self.kind == "statistics": self.content["statistics"] = value
         elif self.index >= 0: self.content[self.kind][self.index] = value
         if self.form_dirty: self.dirty = True
         self.form_dirty = False
     def navigate(self, row):
         if self.content is None: return
         self.apply_form(); self.index = -1; self.editor = None
-        self.kind = ["identity", "people", "departments", "programs", "events", "history"][row]
+        self.kind = ["identity", "people", "departments", "programs", "events", "settings", "statistics", "history"][row]
         self.heading.setText(self.nav.item(row).text()); self.refresh_items()
     def refresh_items(self):
         self.items.blockSignals(True); self.items.clear()
-        self.items.setVisible(self.kind != "identity"); self.add_button.setVisible(self.kind in ("people", "programs", "events")); self.delete_button.setVisible(self.kind in ("people", "programs", "events"))
+        self.items.setVisible(self.kind not in ("identity", "settings", "statistics")); self.add_button.setVisible(self.kind in ("people", "programs", "events")); self.delete_button.setVisible(self.kind in ("people", "programs", "events"))
         if self.kind == "identity": self.show_editor(self.content)
+        elif self.kind == "settings": self.show_editor(self.content["identity"])
+        elif self.kind == "statistics": self.show_editor(self.content["statistics"])
         elif self.kind == "history":
             self.scroll.setWidget(label("Pilih versi dari riwayat untuk mengembalikannya sebagai draft.")); self.run(lambda: self.client.request("GET", "/api/manage/history"), self.history_loaded)
         else:
@@ -304,13 +313,13 @@ class Window(QMainWindow):
             if self.items.count(): self.items.setCurrentRow(0)
             else: self.scroll.setWidget(label("Belum ada item. Gunakan tombol Tambah."))
         self.items.blockSignals(False)
-        if self.kind not in ("identity", "history") and self.items.count(): self.select_item(0)
+        if self.kind not in ("identity", "settings", "statistics", "history") and self.items.count(): self.select_item(0)
     def select_item(self, row):
         if self.kind == "history":
             if row >= 0: self.show_history(row)
             return
         self.apply_form(); self.index = row
-        if row >= 0 and self.content and self.kind != "identity": self.show_editor(self.content[self.kind][row])
+        if row >= 0 and self.content and self.kind not in ("identity", "settings", "statistics"): self.show_editor(self.content[self.kind][row])
     def show_editor(self, item, existing=True):
         self.editor = Editor(self.kind, item, self.upload, existing, self.preview_photo); self.editor.changed.connect(self.mark_dirty); self.scroll.setWidget(self.editor)
     def mark_dirty(self):
@@ -340,7 +349,8 @@ class Window(QMainWindow):
         self.apply_form(); dialog = QDialog(self); dialog.setWindowTitle("Preview isi publikasi"); dialog.resize(900, 650); layout = QVBoxLayout(dialog)
         layout.addWidget(label("Periksa konten sebelum publikasi. Perubahan lokal perlu disimpan terlebih dahulu.", "subtle"))
         view = QPlainTextEdit(); view.setReadOnly(True)
-        lines = ["VISI", self.content["vision"], "", "MISI", *self.content["missions"], "", "PENGURUS"]
+        identity = self.content["identity"]; stats = self.content["statistics"]
+        lines = ["IDENTITAS ANGKATAN", identity["cabinetName"], identity["term"], f"Logo: {identity['logo']}", "", "STATISTIK", *[f"{caption}: {stats[key] if stats[key] is not None else 'Belum dikonfirmasi (angka contoh)'}" for key, caption in [("members", "Anggota OSIS"), ("programs", "Program kerja"), ("activities", "Kegiatan")]], "", "VISI", self.content["vision"], "", "MISI", *self.content["missions"], "", "PENGURUS"]
         def result_lines(items):
             output = []
             for item in items: output.extend([f"Hasil: {item['title']} · {item['date']}", item['description'], f"Foto hasil: {item.get('photo') or 'Tanpa foto'}"])
