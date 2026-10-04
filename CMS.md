@@ -35,11 +35,27 @@ background tabs pause and refresh upon return.
 
 ## Authentication
 
-Account creation/reset is an owner-PC operation through authorized Wrangler.
-There is no registration API, initial default password, or anonymous bootstrap
-endpoint. `desktop-admin/provision.py` writes a salted verifier using a temporary
-SQL file and deletes that file afterward. Do not upload Wrangler credentials
-or the project environment files with the application package.
+Daily account creation is owner-invitation only; there is no public registration,
+default password, or anonymous bootstrap API. The GUI does not provision accounts
+or carry infrastructure credentials. `scripts/cms-owner.py` is a separate
+Wrangler-authorized bootstrap/recovery tool with explicit database selection.
+Bootstrap refuses nonempty account tables. Cloudflare/domain changes remain the
+infrastructure custodian's responsibility; a panel owner has no Cloudflare rights.
+
+Owner login requires MFA. An unenrolled owner receives only a 10-minute enrollment
+session, with no draft/media/account access. First activation additionally needs a
+hashed one-use 24-hour activation code from the infrastructure custodian or a valid
+owner invitation. Enrollment verifies the current password and TOTP, replaces the
+password, and invalidates prior sessions. TOTP secrets use account-bound AES-256-GCM
+with server-only `CMS_MFA_KEY` (32 random bytes as 64 hex characters). Ten hashed
+one-use recovery codes are provided once. Time steps and recovery codes are consumed
+atomically; a reused factor is rejected. See `SECURITY.md` for setup and handover.
+
+Invitations are random 32-byte codes stored only as hashes, valid 24 hours, single
+use, and bound to the issuing owner's active account/epoch. The server assigns role
+and username. Account/invitation management requires password and a fresh MFA
+factor. Disabling an account revokes all sessions and outstanding invitations. The
+last enabled owner with active MFA is protected within the write statement.
 
 Passwords use scrypt N=32768, r=8, p=3, salt=16 bytes, key=32 bytes and constant-time
 comparison. These parameters follow the [OWASP password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
@@ -64,14 +80,21 @@ server's password, session, and account role checks on every request.
 | --- | --- | --- |
 | `GET /api/content` | Public | Published content only |
 | `GET/HEAD /api/media/[id].webp` | Public if referenced by published content | Photo; authenticated draft preview also allowed |
-| `POST /api/manage/login` | Password | Create expiring session |
+| `POST /api/manage/login` | Password; owner also MFA | Create full or restricted enrollment session |
 | `POST /api/manage/logout` | Session | Revoke this session |
 | `GET/PUT /api/manage/content` | Owner/editor | Load/save draft |
 | `POST /api/manage/media` | Owner/editor | Upload bounded still WebP |
 | `GET /api/manage/history` | Owner/editor | Revision metadata |
 | `POST /api/manage/publish` | Owner | Publish entire saved draft |
 | `POST /api/manage/restore` | Owner | Restore revision as draft |
-| `POST /api/manage/password` | Current password + session | Rotate password/revoke sessions |
+| `POST /api/manage/password` | Current password + session; owner also fresh MFA | Rotate password/revoke sessions |
+| `GET /api/manage/security` | Session | MFA status |
+| `POST /api/manage/mfa/begin`, `/confirm` | Unenrolled owner + password + activation grant | Enable MFA and rotate password |
+| `POST /api/manage/invitations/accept` | Valid one-use invitation | Create the assigned account |
+| `GET/POST /api/manage/invitations`, `POST /revoke` | Owner; writes require reauthentication | List/create/revoke invitations |
+| `GET /api/manage/accounts` | Owner with MFA | Account metadata only |
+| `POST /api/manage/accounts/status`, `/revoke-sessions` | Owner + reauthentication | Enable/disable accounts or revoke sessions |
+| `GET /api/manage/audit` | Owner with MFA | Access audit metadata |
 
 Draft writes/publication/restore use an expected version and transactional batch.
 A stale write returns 409 instead of overwriting another editor's changes. Draft
@@ -122,7 +145,9 @@ tests a disposable **local** D1 fixture served at 127.0.0.1:8791: roles, private
 draft/media, CAS conflicts, publication, profile routing, revision restore,
 password rotation, logout, and throttling. It never targets a remote database
 or Google Forms. Provision local qa-owner/qa-editor accounts with the test
-password in that file and clear the local throttle fixture before running.
+password in that file and clear the local throttle fixture before running. The
+unenrolled QA owner also needs a local-only activation grant for the integration
+fixture (`f` repeated 64 characters); never apply that fixture to production.
 
 `scripts/cms-remote-check.py [deployment URL]` creates a disposable remote editor,
 tests login/read restrictions/logout, then removes it in `finally`. It never

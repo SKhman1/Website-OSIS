@@ -2,7 +2,7 @@
 import sys
 a = Analysis(['main.py'], pathex=[], binaries=[], datas=[], hiddenimports=[],
     hookspath=[], hooksconfig={}, runtime_hooks=[],
-    excludes=['PySide6.QtWebEngineCore', 'PySide6.QtWebEngineWidgets'], noarchive=False)
+    excludes=['PySide6.QtWebEngineCore', 'PySide6.QtWebEngineWidgets', 'provision'], noarchive=False)
 if sys.platform == 'win32':
     # Qt 6.11 uses the OS ICU API. Other tools on PATH can expose an incompatible
     # versioned ICU under the same filename. Windows supplies this DLL itself.

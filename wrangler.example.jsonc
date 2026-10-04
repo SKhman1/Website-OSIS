@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "your-school-council",
+  "pages_build_output_dir": "./dist-pages",
+  "compatibility_date": "2026-10-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {"CMS_ENABLED": "true"},
+  "d1_databases": [{"binding":"CMS_DB","database_name":"your-school-content","database_id":"REPLACE_WITH_YOUR_D1_ID","migrations_dir":"migrations/cms"}]
+}

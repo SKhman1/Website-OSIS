@@ -14,7 +14,7 @@ root=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(root/'desktop-admin'))
 import main
 from login_check import MemorySettings
-from provision import provision_account
+from cms_test_fixture import create_test_account as provision_account
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 

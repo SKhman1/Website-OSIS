@@ -57,8 +57,8 @@ class Client:
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
             raise ApiError("Tidak dapat terhubung ke API. Periksa koneksi dan alamat website.") from None
 
-    def login(self, username, password):
-        result = self.request("POST", "/api/manage/login", {"username": username, "password": password})
+    def login(self, username, password, code=""):
+        result = self.request("POST", "/api/manage/login", {"username": username, "password": password, "code": code})
         self.token, self.user = result["token"], result["user"]
         return result
 

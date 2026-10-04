@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
     QDialog, QDialogButtonBox, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem, QHeaderView, QFrame)
 from client import Client, ApiError
 from importers import import_rundown, prepare_photo
-from provision import provision_account
+from security_ui import ApiDialog, InvitationDialog, EnrollmentDialog, AccessDialog
 from gui_async import start_job
 from references import ReferencePicker
 
@@ -197,34 +197,6 @@ class Editor(QWidget):
             data[key] = value
         return data
 
-class SetupDialog(QDialog):
-    def __init__(self, parent, project, local=False):
-        super().__init__(parent); self.setWindowTitle("Setup akun · komputer pemilik"); self.resize(580, 390)
-        layout = QVBoxLayout(self); layout.addWidget(label("Buat atau reset akun", "title")); layout.addWidget(label("Memerlukan otorisasi Wrangler di komputer ini. Reset mencabut seluruh sesi akun tersebut.", "subtle"))
-        form = QFormLayout(); self.project = QLineEdit(str(project)); self.username = QLineEdit(); self.password = QLineEdit(); self.password.setEchoMode(QLineEdit.EchoMode.Password); self.confirm = QLineEdit(); self.confirm.setEchoMode(QLineEdit.EchoMode.Password)
-        self.role = QComboBox(); self.role.addItems(["owner", "editor"]); self.local = QCheckBox("Database lokal untuk pengujian"); self.local.setChecked(local)
-        for caption, widget in [("Folder proyek", self.project), ("Username", self.username), ("Password (minimal 15 karakter)", self.password), ("Ulangi password", self.confirm), ("Izin akun", self.role), ("", self.local)]: form.addRow(caption, widget)
-        form.addRow("", button("Pilih folder proyek…", self.choose_project))
-        layout.addLayout(form)
-        self.status = label(""); layout.addWidget(self.status)
-        self.submit = button("Siapkan akun", self.submit_account, True); layout.addWidget(self.submit)
-    def choose_project(self):
-        path = QFileDialog.getExistingDirectory(self, "Folder Website-OSIS", self.project.text())
-        if path: self.project.setText(path)
-    def submit_account(self):
-        if self.password.text() != self.confirm.text(): message(self, "Password", "Kedua password belum cocok."); return
-        if not message(self, "Setup akun", f"Buat/reset akun {self.username.text()} sebagai {self.role.currentText()} pada database {'lokal' if self.local.isChecked() else 'Cloudflare'}?", True): return
-        project, username, password, role, local = self.project.text(), self.username.text().strip(), self.password.text(), self.role.currentText(), self.local.isChecked()
-        self.submit.setEnabled(False); self.password.clear(); self.confirm.clear(); self.status.setText("Menyiapkan akun…")
-        start_job(self, lambda: provision_account(project, username, password, role, local),
-            lambda _: (self.status.setText("Akun siap. Tutup dialog ini lalu login."), self.submit.setEnabled(True)),
-            lambda exc: (self.status.setText(str(exc)), self.submit.setEnabled(True)))
-    def reject(self):
-        if not getattr(self, '_jobs', None): super().reject()
-    def closeEvent(self, event):
-        if getattr(self, '_jobs', None): event.ignore()
-        else: super().closeEvent(event)
-
 class Window(QMainWindow):
     def __init__(self, project, base_url=BASE_URL):
         super().__init__(); self.project = project; self.setWindowTitle("VND Console · OSIS SMK Diponegoro 01"); self.resize(1180, 820); self.setMinimumSize(900, 600)
@@ -245,9 +217,10 @@ class Window(QMainWindow):
         form = QFormLayout(); form.setSpacing(16)
         self.url = QLineEdit(base_url if base_url != BASE_URL else self.settings.value("apiUrl", base_url)); self.username = QLineEdit(self.settings.value("username", "")); self.password = QLineEdit(); self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.password.returnPressed.connect(self.login)
-        form.addRow("Alamat website", self.url); form.addRow("Username", self.username); form.addRow("Password", self.password)
+        self.code = QLineEdit(); self.code.setPlaceholderText("Owner: kode autentikator / pemulihan; kosong saat setup pertama"); self.code.returnPressed.connect(self.login)
+        form.addRow("Alamat website", self.url); form.addRow("Username", self.username); form.addRow("Password", self.password); form.addRow("Kode autentikator", self.code)
         outer.addLayout(form); self.login_button = button("Masuk", self.login, True); outer.addWidget(self.login_button)
-        outer.addWidget(button("Setup akun di komputer pemilik…", lambda: SetupDialog(self, self.project, self.url.text().startswith("http://127.0.0.1")).exec()))
+        outer.addWidget(button("Saya memiliki undangan pengurus…", self.accept_invitation))
         self.login_status = label("Password tidak disimpan. Sesi terkunci setelah 15 menit tanpa aktivitas.", "subtle"); outer.addWidget(self.login_status); outer.addStretch()
         return page
     def make_workspace(self):
@@ -257,6 +230,7 @@ class Window(QMainWindow):
         self.user_label = label("", "subtle"); side.addWidget(self.user_label)
         self.nav = QListWidget(); self.nav.addItems(["Visi & misi", "Pengurus & pembina", "Seksi bidang", "Program kerja", "Kegiatan & rundown", "Identitas angkatan", "Statistik beranda", "Riwayat perubahan"]); self.nav.currentRowChanged.connect(self.navigate); side.addWidget(self.nav)
         self.nav.setWordWrap(True)
+        self.access_button = button("Akses pengurus…", self.manage_access); self.access_button.setVisible(False); side.addWidget(self.access_button)
         side.addWidget(button("Ganti password…", self.change_password)); side.addWidget(button("Keluar", self.logout)); outer.addWidget(sidebar)
         body = QWidget(); layout = QVBoxLayout(body); layout.setContentsMargins(28, 24, 28, 24)
         header = QHBoxLayout(); self.heading = label("Visi & misi", "title"); header.addWidget(self.heading); header.addStretch(); self.refresh_button = button("Muat ulang", self.load_content); header.addWidget(self.refresh_button); layout.addLayout(header)
@@ -287,12 +261,25 @@ class Window(QMainWindow):
         if self.busy: return
         try: candidate = Client(self.url.text())
         except ValueError as exc: message(self, "Alamat API", str(exc)); return
-        username, password = self.username.text().strip(), self.password.text(); self.password.clear()
-        def work(): candidate.login(username, password); return candidate.request("GET", "/api/manage/content")
+        username, password, code = self.username.text().strip(), self.password.text(), self.code.text().strip(); self.password.clear(); self.code.clear()
+        def work():
+            result = candidate.login(username, password, code)
+            return result if result.get("mfaPending") else candidate.request("GET", "/api/manage/content")
         def done(result):
             self.client = candidate; self.settings.setValue("apiUrl", candidate.base_url); self.settings.setValue("username", username)
+            if result.get("mfaPending"):
+                dialog = EnrollmentDialog(self, candidate); dialog.exec(); self.lock(); return
+            self.access_button.setVisible(candidate.user["role"] == "owner")
             self.user_label.setText(f"{username} · {candidate.user['role']}"); self.root.setCurrentIndex(1); self.lock_timer.start(); self.loaded(result)
         self.run(work, done)
+    def accept_invitation(self):
+        if self.busy: return
+        try: client = Client(self.url.text())
+        except ValueError as exc: message(self, "Alamat API", str(exc)); return
+        InvitationDialog(self, client).exec()
+    def manage_access(self):
+        if self.busy or not self.client or self.client.user["role"] != "owner": return
+        AccessDialog(self, self.client).exec()
     def loaded(self, result):
         self.editor = None; self.index = -1
         self.content = result["content"]; self.version = result["version"]; self.dirty = self.form_dirty = False
@@ -444,19 +431,25 @@ class Window(QMainWindow):
         self.run(lambda: self.client.request("POST", "/api/manage/restore", {"version": self.version, "revisionId": item['id']}), lambda _: self.run(lambda: self.client.request("GET", "/api/manage/content"), self.loaded))
     def change_password(self):
         dialog = QDialog(self); dialog.setWindowTitle("Ganti password"); layout = QFormLayout(dialog)
-        current, new, confirm = QLineEdit(), QLineEdit(), QLineEdit()
+        current, new, confirm = QLineEdit(), QLineEdit(), QLineEdit(); code = QLineEdit(); code.setPlaceholderText("Owner: kode autentikator / pemulihan")
         for caption, widget in [("Password saat ini", current), ("Password baru (minimal 15 karakter)", new), ("Ulangi password baru", confirm)]: widget.setEchoMode(QLineEdit.EchoMode.Password); layout.addRow(caption, widget)
+        layout.addRow("Kode autentikator (owner)", code)
         def submit():
             if new.text() != confirm.text(): message(dialog, "Password", "Password baru belum cocok."); return
-            data = {"current": current.text(), "next": new.text()}; current.clear(); new.clear(); confirm.clear(); dialog.accept()
+            data = {"current": current.text(), "next": new.text(), "code": code.text().strip()}; current.clear(); new.clear(); confirm.clear(); code.clear(); dialog.accept()
             self.run(lambda: self.client.request("POST", "/api/manage/password", data), lambda _: (self.lock(), message(self, "Password diperbarui", "Seluruh sesi sudah dicabut. Login kembali dengan password baru.")))
         layout.addRow(button("Ganti password", submit, True)); dialog.exec()
     def logout(self):
         if not self.confirm_discard(): return
         self.run(lambda: self.client.logout(), lambda _: self.lock())
     def lock(self):
-        if self.busy: self.lock_timer.start(30_000); return
+        if self.busy or any(dialog.busy for dialog in self.findChildren(ApiDialog)): self.lock_timer.start(30_000); return
+        for dialog in self.findChildren(ApiDialog):
+            for field in dialog.findChildren(QLineEdit): field.clear()
+            for field in dialog.findChildren(QPlainTextEdit): field.clear()
+            dialog.reject()
         if self.client: self.client.token, self.client.user = "", None
+        self.code.clear(); self.access_button.setVisible(False)
         self.index = -1
         self.content = None; self.editor = None; self.dirty = self.form_dirty = False; self.lock_timer.stop(); self.root.setCurrentIndex(0); self.password.clear(); self.login_status.setText("Sesi terkunci. Login kembali untuk melanjutkan.")
         self.items.blockSignals(True); self.items.clear(); self.items.blockSignals(False)
@@ -477,13 +470,11 @@ def main():
         import tempfile
         from PIL import Image
         from openpyxl import Workbook
-        from provision import encode_password
         with tempfile.TemporaryDirectory() as folder:
             photo = Path(folder) / 'test.png'; Image.new('RGB', (32, 32), 'orange').save(photo)
             assert prepare_photo(photo)[8:12] == b'WEBP'
             book = Workbook(); book.active.append(['Mulai', 'Selesai', 'Agenda', 'Lokasi']); book.active.append(['07:00', '07:30', 'Uji', 'Aula'])
             sheet = Path(folder) / 'test.xlsx'; book.save(sheet); assert len(import_rundown(sheet)) == 1
-            assert encode_password('Only a temporary startup test password').startswith('$scrypt$')
             Client(BASE_URL)
         from login_check import begin_login_check
         state, cleanup = begin_login_check(app, window)

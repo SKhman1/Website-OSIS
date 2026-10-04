@@ -269,3 +269,13 @@ Astro generates responsive WebP variants. The original campus photograph is
 kept unchanged and the caption explicitly identifies SMK Diponegoro 01.
 The aspiration security widget uses its supported compact size to fit narrow
 screens without clipping.
+
+
+## Control panel security and annual handover
+
+The native GUI is login/invitation only. Panel owners use MFA and manage council
+access; the infrastructure custodian alone controls Cloudflare/domain/configuration.
+See [SECURITY.md](SECURITY.md) and [desktop-admin/README.md](desktop-admin/README.md).
+Use `wrangler.example.jsonc` and your own URL/database/secrets for forks. This
+change does not publish the private repository or grant hosting access to council
+accounts. Build output is `desktop-admin/dist-secure/VND-Console/`.

@@ -17,6 +17,7 @@ desktop-admin/build/
 desktop-admin/dist/
 desktop-admin/dist-portable/
 desktop-admin/dist-members/
+desktop-admin/dist-secure/
 desktop-admin/build-portable/
 desktop-admin/*.spec
 !desktop-admin/console.spec

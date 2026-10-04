@@ -1,6 +1,7 @@
 // Run against wrangler pages dev with the local D1 fixture only.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { totp } from '../src/server/cms-security';
 const base='http://127.0.0.1:8791';
 const password='Disposable CMS local test password 2026.';
 async function call(path:string,method='GET',data?:unknown,token?:string,headers:Record<string,string>={}){
@@ -15,8 +16,24 @@ check((await call('/api/manage/content')).response.status===401,'missing token r
 check((await call('/api/manage/content','GET',undefined,'0'.repeat(64))).response.status===401,'forged token rejected');
 check((await call('/api/manage/login','POST',{username:'qa-owner',password:'wrong'})).response.status===401,'wrong password rejected');
 check((await call('/api/manage/login','POST',{username:'qa-owner',password},undefined,{Origin:base})).response.status===403,'browser-origin login rejected');
-const login=await call('/api/manage/login','POST',{username:'qa-owner',password});check(login.response.status===200,'owner password login succeeds');const owner=login.result.token;
+const login=await call('/api/manage/login','POST',{username:'qa-owner',password});check(login.response.status===200 && login.result.mfaPending,'owner password only receives restricted setup session');
+check((await call('/api/manage/content','GET',undefined,login.result.token)).response.status===403,'unenrolled owner cannot read draft');
+const mfa=await call('/api/manage/mfa/begin','POST',{current:password,activation:'f'.repeat(64)},login.result.token);check(mfa.response.status===200,'encrypted MFA enrollment starts');
+const ownerPassword=password+' replaced';
+const enrollment=await call('/api/manage/mfa/confirm','POST',{current:password,activation:'f'.repeat(64),next:ownerPassword,code:totp(mfa.result.secret,Math.floor(Date.now()/30000))},login.result.token);check(enrollment.response.status===200,'MFA enrollment and password replacement succeed');
+const ownerLogin=await call('/api/manage/login','POST',{username:'qa-owner',password:ownerPassword,code:enrollment.result.recoveryCodes[0]});check(ownerLogin.response.status===200,'owner login requires second factor');const owner=ownerLogin.result.token;
+check((await call('/api/manage/login','POST',{username:'qa-owner',password:ownerPassword,code:enrollment.result.recoveryCodes[0]})).response.status===401,'used recovery code fails on real worker');
 const editor=(await call('/api/manage/login','POST',{username:'qa-editor',password})).result.token;
+check((await call('/api/manage/accounts','GET',undefined,editor)).response.status===403,'editor cannot manage access via direct API');
+const invited=await call('/api/manage/invitations','POST',{username:'qa-invited',role:'editor',current:ownerPassword,code:enrollment.result.recoveryCodes[1]},owner);check(invited.response.status===200,'owner creates invitation with fresh reauthentication');
+check((await call('/api/manage/invitations/accept','POST',{invitation:invited.result.invitation,password,role:'owner'})).response.status===400,'invitation recipient cannot assign role');
+check((await call('/api/manage/invitations/accept','POST',{invitation:invited.result.invitation,password})).response.status===200,'native invitation redemption works');
+check((await call('/api/manage/invitations/accept','POST',{invitation:invited.result.invitation,password})).response.status===400,'redeemed invitation fails on real worker');
+const invitee=(await call('/api/manage/login','POST',{username:'qa-invited',password})).result.token;
+const accountRows=(await call('/api/manage/accounts','GET',undefined,owner)).result.items;
+const invitedId=accountRows.find((row:any)=>row.username==='qa-invited').id;
+check((await call('/api/manage/accounts/status','POST',{id:invitedId,enabled:false,current:ownerPassword,code:enrollment.result.recoveryCodes[2]},owner)).response.status===200,'owner disables previous council account');
+check((await call('/api/manage/content','GET',undefined,invitee)).response.status===401,'disabled account session is rejected immediately');
 check((await call('/api/manage/publish','POST',{version:0},editor)).response.status===403,'editor cannot publish');
 const loaded=(await call('/api/manage/content','GET',undefined,owner)).result;let version=loaded.version;
 const c=structuredClone(loaded.content);c.vision='Local integration draft — not real school content';

@@ -6,25 +6,33 @@ pengembangan; build Windows sudah menyertakan runtime.
 
 ## Buka di Windows
 
-Jalankan `dist-portable/VND-Console/VND-Console.exe`, atau `start-admin.ps1` dari folder ini.
+Jalankan `dist-secure/VND-Console/VND-Console.exe`, atau `start-admin.ps1` dari folder ini.
 Pertahankan seluruh folder `VND-Console`, termasuk `_internal`; jangan memindahkan
 EXE sendirian. Alamat website: `https://vnd-smkdipo1.pages.dev`.
 
-Pertama kali, pada laptop pemilik:
+Control panel tidak lagi menyediakan setup/reset akun lokal. Konfigurasi Cloudflare,
+domain, database, dan deployment tetap dipegang pemilik infrastruktur. Pengurus
+berikutnya hanya mengelola konten melalui akun yang diundang owner panel.
 
-1. Klik **Setup akun di komputer pemilik**. Pilih folder proyek Website-OSIS.
-2. Isi username huruf kecil, password minimal 15 karakter, ulangi password, dan
-   pilih `owner`. Biarkan pilihan database lokal **tidak dicentang**.
-3. Klik **Siapkan akun**. Setelah berhasil, tutup dialog dan login.
+1. Owner yang sudah ada login memakai password. Kosongkan kode saat aktivasi MFA pertama.
+2. Pada dialog keamanan, masukkan kode aktivasi owner dari pemilik infrastruktur
+   (atau kode dari hasil penerimaan undangan owner), password saat ini, buat kunci autentikator, lalu
+   tambahkan secara manual ke aplikasi authenticator (TOTP, 6 digit, 30 detik).
+3. Masukkan kode yang cocok dan password baru yang berbeda. Simpan sepuluh kode
+   pemulihan secara pribadi; kode hanya ditampilkan sekali. Login lagi dengan
+   password baru dan kode authenticator berikutnya, setelah pergantian 30 detik.
+4. Owner membuka **Akses pengurus** untuk membuat undangan sekali pakai, berlaku
+   24 jam. Penerima memakai **Saya memiliki undangan pengurus** dan membuat password
+   sendiri. Tidak ada pilihan role/username pada formulir penerima.
+5. Editor menyimpan draft; owner panel menerbitkan konten dan mengelola akses akun.
+   Owner panel tidak mendapat token atau akses Cloudflare. Pengelolaan akun meminta
+   password dan kode baru. Akun lama dinonaktifkan setelah serah terima.
 
-Setup menggunakan otorisasi Wrangler yang sudah ada di komputer pemilik. Folder
-proyek harus memiliki Node.js dan `node_modules/wrangler` (`npm ci` jika belum ada).
-Password diketik sendiri di aplikasi; tidak perlu diberikan melalui chat.
-Reset akun lewat setup juga mencabut semua sesi akun tersebut.
-
-Pemilik dapat membuat akun `editor` untuk pengurus lainnya. Berikan paket aplikasi
-kepada mereka, lalu mereka login dengan akun masing-masing. Mereka tidak perlu
-Wrangler, token Cloudflare, atau akses repositori untuk mengedit konten.
+Paket ini tidak membutuhkan Node/Wrangler atau folder source untuk digunakan.
+Gunakan alamat HTTPS milik sekolah yang dipercaya. Jangan memasukkan password
+ke server dari fork yang tidak dipercaya. Password/key/kode tidak perlu diberikan
+melalui chat. Pemilik infrastruktur menjalankan bootstrap/recovery terpisah bila
+perlu; lihat `../SECURITY.md`. Owner yang belum aktif MFA tidak dapat membuka draft.
 
 ## Alur kerja
 
@@ -39,12 +47,10 @@ Wrangler, token Cloudflare, atau akses repositori untuk mengedit konten.
 - **Riwayat perubahan** menyimpan 50 versi terakhir. Pemilik dapat mengembalikan
   versi sebagai draft, memeriksa, lalu menerbitkannya.
 
-ID program dan anggota terlihat di daftar sebelah kiri. Masukkan ID tersebut,
-satu per baris, pada profil/bidang yang menjalankannya. ID profil/program lama
-dan nomor bidang tetap untuk menjaga tautan. Anggota baru dapat diberi kelompok
-`member`, pembina baru `advisor`, sedangkan empat peran inti memakai `core`.
-Setiap hasil kerja memiliki ID unik, judul, deskripsi, dan tanggal `YYYY-MM-DD`.
-Foto hasil kerja opsional; pilih baris hasil sebelum menekan tombol unggah foto.
+Pilih ketua seksi bidang, anggota, dan program melalui daftar nama. Ketua dipisahkan
+dari anggota; nama/program baru dapat ditambahkan langsung lewat pemilih. ID tetap
+untuk menjaga tautan. Profil baru memakai kelompok member, pembina advisor, dan
+empat peran inti core. Setiap hasil kerja memiliki ID, judul, deskripsi, dan tanggal.
 
 Foto JPG/PNG/WebP diproses lokal menjadi WebP statis, sisi maksimal 1600 piksel,
 tanpa metadata. Input maksimal 15 MB/24 megapiksel; hasil maksimal 1 MB. Setelah
@@ -119,6 +125,6 @@ menampilkan pilihan nama; gunakan **Tambah ketua…**, **Tambah anggota…**, at
 Tidak perlu mengetik ID. Ketua otomatis dikeluarkan dari pilihan anggota agar
 namanya tidak muncul dua kali. Preview publikasi menampilkan nama dan judul
 program. Simpan draft terlebih dahulu, lalu publikasikan setelah diperiksa.
-Build Windows terbaru ada di `desktop-admin/dist-members/VND-Console/`;
+Build Windows terbaru ada di `desktop-admin/dist-secure/VND-Console/`;
 launcher `start-admin.ps1` membuka versi ini. Folder versi lama dipertahankan agar
 jendela yang sedang digunakan dan perubahan lokal tidak terganggu.

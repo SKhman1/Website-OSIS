@@ -11,7 +11,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'desktop-admin'))
 from client import Client, ApiError
-from provision import provision_account
+from cms_test_fixture import create_test_account as provision_account
 
 base = sys.argv[1]
 username = 'qa-' + secrets.token_hex(8)

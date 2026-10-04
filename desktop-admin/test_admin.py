@@ -13,10 +13,14 @@ from PIL import Image
 from client import Client
 from importers import import_rundown, prepare_photo
 from main import Window, Editor, STYLE
-from provision import encode_password
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+from importlib import import_module
+encode_password = import_module("cms-owner").encode_password
 from gui_async import start_job
 from PySide6.QtCore import QEventLoop, QTimer, Qt
 from references import ReferencePicker
+from security_ui import InvitationDialog, EnrollmentDialog, AccessDialog
 
 class Tests(unittest.TestCase):
     @classmethod
@@ -51,6 +55,27 @@ class Tests(unittest.TestCase):
     def test_password_verifier_matches_node_parameters(self):
         encoded = encode_password("A sufficiently long test password", bytes.fromhex("00" * 16))
         self.assertTrue(encoded.startswith("$scrypt$32768$8$3$")); self.assertEqual(len(encoded.split("$")[-1]), 64)
+    def test_login_has_no_local_owner_setup_and_invitation_has_no_role_selector(self):
+        window=Window(self.root)
+        captions=[b.text() for b in window.login_page.findChildren(QPushButton)]
+        self.assertFalse(any('Setup akun' in text for text in captions));self.assertTrue(any('undangan' in text for text in captions))
+        dialog=InvitationDialog(window,Client('https://example.com'))
+        from PySide6.QtWidgets import QComboBox
+        self.assertEqual(dialog.findChildren(QComboBox),[]);dialog.close();window.close()
+    def test_security_dialogs_send_roles_only_from_owner_and_clear_credentials(self):
+        client=Client('https://example.com');client.user=dict(username='qa-owner',role='owner')
+        client.request=lambda *args,**kwargs:dict(ok=True,items=[])
+        window=Window(self.root);dialog=AccessDialog(window,client)
+        # Finish the disposable request that refresh starts, without blocking the event loop.
+        loop=QEventLoop();QTimer.singleShot(1000,loop.quit);loop.exec()
+        sent=[];dialog.call=lambda path,data,done,method='POST':sent.append((path,data))
+        dialog.username.setText('new-editor');dialog.password.setText('Disposable test password');dialog.code.setText('123456');dialog.invite()
+        self.assertEqual(sent[0][0],'/api/manage/invitations');self.assertEqual(sent[0][1]['role'],'editor')
+        self.assertEqual(dialog.password.text(),'');self.assertEqual(dialog.code.text(),'')
+        # No real requests for enrollment UI; initialize only with dummy authenticated client.
+        enroll=EnrollmentDialog(window,client);enroll.started(dict(secret='A'*32))
+        self.assertTrue(enroll.finish.isEnabled());self.assertIn('A'*32,enroll.output.toPlainText())
+        window.lock();self.assertEqual(enroll.output.toPlainText(),'');self.assertEqual(dialog.output.toPlainText(),'');window.close()
     def test_forms_preserve_results_and_all_core_fields(self):
         for kind in ("people", "departments", "programs"):
             original = copy.deepcopy(self.seed[kind][0]); editor = Editor(kind, original, lambda *_: None)
