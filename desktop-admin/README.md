@@ -59,8 +59,34 @@ publik sebelum diterbitkan. D1 menampung maksimal 200 unggahan pada versi awal.
 
 ## Import rundown
 
-Gunakan CSV UTF-8 atau `.xlsx` satu sheet, maksimal 2 MB dan 200 baris.
-Empat judul kolom wajib: **Mulai, Selesai, Agenda, Lokasi**. Contoh:
+File **RUNDOWN TO (2).xlsx** menjadi preset untuk acara berikutnya. Pertahankan
+judul **RUNDOWN KEGIATAN**, nama acara, tanggal lengkap (contoh `14 Oktober 2026`),
+dan enam kolom **NO, WAKTU, KEGIATAN, TEMPAT, NARASUMBER, PENANGGUNG JAWAB**
+pada setiap blok hari. Beberapa blok hari dapat berada dalam satu atau beberapa
+sheet. Nomor hari di website mengikuti urutan tanggal, bukan label hari yang
+mungkin tersalin dari blok sebelumnya.
+
+Di **Kegiatan & rundown**, gunakan **Import agenda Excel…** untuk mengimpor
+beberapa hari. Preview memiliki pilihan hari dan centang **Impor hari ini**.
+Periksa/perbaiki jam di tabel sebelum menerima. Import ulang judul acara dan
+tanggal yang sama memperbarui jadwal tanpa membuat duplikat; deskripsi dan pilihan
+notifikasi yang sudah diatur tetap tersimpan. Untuk mengganti satu acara, gunakan
+**Import rundown Excel / CSV…** di formulir acara dan pilih satu hari.
+
+Jam `07:30` maupun `07.30` diterima. Rentang `21:30 - 04:00` berarti selesai
+esok hari; preview menyediakan centang untuk mengubahnya. Waktu tunggal seperti
+`13:45` menjadi penanda waktu tanpa durasi, bukan sesi yang terus berlangsung.
+Sesi peserta dan panitia boleh berjalan paralel. Sel narasumber/penanggung jawab
+yang benar-benar digabung diwariskan sesuai area gabungannya. Sheet panitia,
+nomor telepon, perlengkapan, dan gambar tidak ikut dikirim ke server.
+
+Batas file 2 MB, isi ZIP 20 MB, 20 sheet, 2000 baris fisik dan 64 kolom per sheet,
+100.000 sel tersimpan, 100 hari dan 200 sesi per hari. Formula pada sheet rundown,
+macro, tautan eksternal, file terenkripsi, dan area gabungan terlalu besar ditolak.
+Formula sheet lain tidak dievaluasi atau diimpor.
+
+Format sederhana CSV UTF-8 / Excel tetap mendukung empat kolom
+**Mulai, Selesai, Agenda, Lokasi**. Format ini satu hari dan tidak bertumpuk:
 
 ```csv
 Mulai,Selesai,Agenda,Lokasi
@@ -68,12 +94,11 @@ Mulai,Selesai,Agenda,Lokasi
 07:30,08:00,Pembukaan,Aula
 ```
 
-Jam menggunakan `HH:MM` WIB. Import membuka preview yang dapat diperbaiki;
-penerimaan preview mengganti rundown draft, bukan langsung menerbitkan acara.
-Isi nama, tanggal, deskripsi, dan lokasi acara. Jadwal harus berurutan tanpa
-tumpang tindih. Formula, macro, tautan eksternal, dan file terenkripsi ditolak.
-Centang **Notifikasi selama acara berlangsung** hanya untuk acara yang disetujui;
-island tetap tersembunyi sebelum/sesudah waktu acara.
+Import mengubah draft lokal. Isi deskripsi/lokasi, aktifkan **Notifikasi selama
+sesi terjadwal** jika disetujui, simpan draft, lalu owner mempublikasikan.
+Jadwal baru otomatis tampil tanpa build/deploy. Island hanya muncul dalam
+rentang sesi yang memiliki durasi; jeda dan penanda waktu tidak memicu notifikasi.
+Website menunjukkan sesi menurut jam WIB, bukan konfirmasi kehadiran langsung.
 
 ## Password dan sesi
 

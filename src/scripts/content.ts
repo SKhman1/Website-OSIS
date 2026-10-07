@@ -1,5 +1,6 @@
-import { validateContent, personPath, type CmsContent, type CmsPerson, type CmsDepartment, type CmsProgram, type CmsResult, type CmsEvent } from '../lib/cms-content';
+import { validateContent, personPath, type CmsContent, type CmsPerson, type CmsDepartment, type CmsProgram, type CmsResult } from '../lib/cms-content';
 import type { Announcement } from '../content/announcements';
+import { mountAgenda, agendaNotices } from './agenda';
 
 // Public content only. No administrator token or private endpoints in this bundle.
 let version = -1;
@@ -43,16 +44,6 @@ function results(items: CmsResult[]) {
     if(item.photo)article.append(image(item.photo,item.photoAlt??item.title));copy.append(time,el('h3','',item.title),el('p','',item.description));article.append(copy);root.append(article);}return root;
 }
 function date(value: string) { return new Intl.DateTimeFormat('id-ID',{dateStyle:'long',timeZone:'Asia/Jakarta'}).format(new Date(`${value}T00:00:00+07:00`)); }
-function events(items: CmsEvent[]) {
-  if(!items.length)return empty('Agenda kegiatan segera hadir','Jadwal dan rundown kegiatan OSIS akan dibagikan di sini setelah diumumkan.');
-  const root=el('div','content-list');for(const event of [...items].sort((a,b)=>b.date.localeCompare(a.date)||a.start.localeCompare(b.start))){
-    const article=el('article');article.id=`acara-${event.id}`;const time=el('time','',`${date(event.date)} · ${event.start}–${event.end} WIB`);time.dateTime=`${event.date}T${event.start}:00+07:00`;
-    article.append(time,el('h3','',event.title),el('p','',event.description),el('p','',event.location));
-    if(event.rundown.length){const details=el('details','work-details');details.append(el('summary','','Lihat rundown ↘'));const list=el('ol','event-rundown');
-      for(const row of event.rundown){const item=el('li'),clock=el('span','rundown-time',`${row.start}–${row.end} WIB`),body=el('div');body.append(el('strong','',row.agenda));if(row.location)body.append(el('p','',row.location));item.append(clock,body);list.append(item);}details.append(list);article.append(details);}
-    root.append(article);
-  }return root;
-}
 function photoUpdate(root: Element, source: string, alt: string, placeholder: boolean) {
   const img=root.querySelector<HTMLImageElement>('img');if(img){img.removeAttribute('srcset');img.removeAttribute('sizes');img.src=source;img.alt=alt;}
   const caption=root.querySelector<HTMLElement>('figcaption');if(caption)caption.hidden=!placeholder;
@@ -80,7 +71,7 @@ export function renderContent(content: CmsContent) {
   document.querySelectorAll('[data-cms-missions]').forEach(node=>node.replaceChildren(...content.missions.map(m=>el('p','',m))));
   document.querySelectorAll<HTMLElement>('[data-cms-people]').forEach(node=>node.replaceChildren(...content.people.filter(p=>p.group===node.dataset.cmsPeople).map(p=>card(p,node.dataset.cmsHeading))));
   document.querySelectorAll<HTMLElement>('[data-cms-departments]').forEach(node=>node.replaceChildren(...content.departments.slice(0,Number(node.dataset.cmsLimit)||10).map(d=>card(d,node.dataset.cmsHeading))));
-  document.querySelectorAll('[data-cms-events]').forEach(node=>node.replaceChildren(events(content.events)));
+  document.querySelectorAll('[data-cms-events]').forEach(node=>mountAgenda(node,content.events));
   const personRoot=document.querySelector<HTMLElement>('[data-cms-person]');
   if(personRoot){const path=location.pathname.replace(/\/$/,'').split('/');const id=path.at(-1);const person=content.people.find(p=>p.id===id);
     if(!person){personRoot.replaceChildren(empty('Profil tidak tersedia','Profil ini belum diterbitkan atau sudah diarsipkan.'));return;}
@@ -123,7 +114,7 @@ export function renderContent(content: CmsContent) {
       departmentRoot.querySelectorAll<HTMLAnchorElement>('.profile-neighbors a').forEach(link=>{const id=link.pathname.split('/').filter(Boolean).at(-1);const peer=content.departments.find(item=>item.id===id);if(peer)link.textContent=peer.name+' ↗';});
     }
   }
-  const notices: Announcement[]=content.events.filter(e=>e.notify).map(e=>({id:`cms-${e.id}`,kind:'live',title:e.title,message:`${e.description}\n${e.location}\n${e.start}–${e.end} WIB`,href:`/#acara-${e.id}`,linkLabel:'Lihat rundown',startsAt:`${e.date}T${e.start}:00+07:00`,endsAt:`${e.date}T${e.end}:00+07:00`}));
+  const notices: Announcement[]=agendaNotices(content.events);
   // Retain the latest public schedule if the island module initializes later.
   const island=document.querySelector<HTMLElement>('[data-notification-island]');if(island)island.dataset.announcements=JSON.stringify(notices);
   window.dispatchEvent(new CustomEvent('osis:announcements',{detail:notices}));

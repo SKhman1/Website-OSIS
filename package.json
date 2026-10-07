@@ -12,6 +12,7 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
     "test:cms-dom": "node scripts/cms-dom-check.mjs",
+    "test:agenda-dom": "node scripts/agenda-dom-check.mjs",
     "build:pages": "astro build --config astro.pages.config.mjs",
     "preview:pages": "wrangler pages dev dist-pages --ip 127.0.0.1 --port 8788",
     "deploy:pages": "npm run build:pages && wrangler pages deploy dist-pages --project-name vnd-smkdipo1 --branch main"

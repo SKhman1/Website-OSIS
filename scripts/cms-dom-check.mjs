@@ -6,12 +6,15 @@ import vm from 'node:vm';
 import ts from 'typescript';
 const transform=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
 const helper={exports:{}};vm.runInNewContext(transform(fs.readFileSync('src/lib/cms-content.ts','utf8')),{exports:helper.exports,Date,Set});
+const schedule={exports:{}};vm.runInNewContext(transform(fs.readFileSync('src/lib/agenda.ts','utf8')),{exports:schedule.exports,Date});
 const seed=JSON.parse(fs.readFileSync('dist-pages/content-seed.json','utf8'));
 function page(file,path){
   const window=new Window({url:'https://offline.invalid'+path,settings:{disableJavaScriptFileLoading:true,disableJavaScriptEvaluation:true,disableCSSFileLoading:true,disableIframePageLoading:true}});
   window.document.write(fs.readFileSync('dist-pages/'+file,'utf8'));
   const result={};window.setInterval=()=>1;
-  vm.runInNewContext(transform(fs.readFileSync('src/scripts/content.ts','utf8')),{exports:result,require:()=>helper.exports,window,document:window.document,location:window.location,HTMLAnchorElement:window.HTMLAnchorElement,CustomEvent:window.CustomEvent,Intl,Date,Number,Boolean,fetch:async()=>({ok:false}),clearInterval:()=>{}});
+  const context={window,document:window.document,location:window.location,Element:window.Element,HTMLAnchorElement:window.HTMLAnchorElement,CustomEvent:window.CustomEvent,Intl,Date,Number,Boolean,fetch:async()=>({ok:false}),clearInterval:()=>{}};
+  const agenda={exports:{}};vm.runInNewContext(transform(fs.readFileSync('src/scripts/agenda.ts','utf8')),{...context,exports:agenda.exports,require:()=>schedule.exports});
+  vm.runInNewContext(transform(fs.readFileSync('src/scripts/content.ts','utf8')),{...context,exports:result,require:path=>path==='./agenda'?agenda.exports:helper.exports});
   return {window,document:window.document,render:result.renderContent};
 }
 const c=structuredClone(seed);

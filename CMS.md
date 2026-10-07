@@ -100,8 +100,8 @@ Draft writes/publication/restore use an expected version and transactional batch
 A stale write returns 409 instead of overwriting another editor's changes. Draft
 and published states are separate. Fifty revisions are retained; restore does
 not immediately republish. Strict schema validation rejects unknown fields,
-external image URLs, missing references, malformed dates, overlapping rundown
-slots, or removal of required roles/bidang. Dynamic website rendering uses text
+external image URLs, missing references, malformed dates, unsorted/out-of-window rundown
+slots, or removal of required roles/bidang. Parallel slots are supported. Dynamic website rendering uses text
 nodes and DOM elements, never HTML supplied by editors.
 
 ## Photos and rundown
@@ -125,11 +125,22 @@ R2 requires explicitly enabling that Cloudflare product, creating a private
 bucket, migrating existing D1 assets, and configuring the binding before use.
 Do not simply add the binding while older assets remain in D1.
 
-XLSX imports are bounded to 2 MB, 20 MB expanded ZIP content, 200 rows and one
-sheet. Macro/external-link/encrypted archives and formulas are rejected.
-`defusedxml` protects workbook XML parsing. The server accepts only normalized
-rundown rows, never workbooks, macros, or formulas. See the desktop README for
-the four-column format and workflow.
+XLSX imports support the supplied multi-sheet, multi-day rundown preset and
+the original four-column format. Limits: 2 MB compressed, 20 MB expanded,
+20 sheets, 2000 physical rows / 64 columns per sheet, 100,000 stored cells,
+100 days, 200 sessions per day. XML is inspected before allocation; oversized
+merges, macros, external links and encryption are rejected. Rundown-sheet formulas
+are rejected; unrelated sheets are ignored and never evaluated. Only normalized
+schedule rows are uploaded, never workbooks or private committee/contact sheets.
+
+Optional `endNextDay` on events/rows allows up to 24 hours; empty row `end` means
+a timestamp milestone. Optional `speaker`/`coordinator` preserve public credits.
+Rows remain sorted by start, with parallel sessions allowed. The public panel
+shows all currently scheduled sessions, upcoming/gap/finished states and a
+responsive day selector. Finite session windows drive the navbar notice; a
+milestone or gap produces no live notice. The browser uses explicit WIB timestamps
+and pauses updates while hidden. This indicates the published schedule, not a
+server-confirmed live attendance state. See the desktop README for reuse.
 
 ## Verification
 

@@ -10,10 +10,22 @@ test('content preserves all four core roles and ten fields; rejects unknown fiel
   assert.equal(validateContent(seed).people.filter(p=>p.group==='core').length,4);
   for(const mutate of [c=>{c.secret='private';},c=>{c.people.pop();},c=>{c.people[0].photo='https://evil.test/a.svg';},c=>{c.departments.pop();},c=>{c.people[0].programIds=['missing'];}] as ((c:any)=>void)[]){const c=structuredClone(seed);mutate(c);assert.throws(()=>validateContent(c));}
 });
-test('rundowns reject invalid dates, overlapping slots, and times outside the event',()=>{
+test('rundowns reject invalid dates, unsorted slots, and times outside the event',()=>{
   const event={id:'trip-observasi',title:'Trip Observasi',description:'Deskripsi',date:'2026-10-10',location:'Sekolah',start:'07:00',end:'10:00',notify:false,rundown:[{start:'07:00',end:'08:00',agenda:'Registrasi',location:'Aula'}]};
   const c=structuredClone(seed);c.events=[event];assert.equal(validateContent(c).events.length,1);
-  for(const mutate of [e=>{e.date='2026-02-30';},e=>{e.rundown[0].start='06:59';},e=>{e.rundown.push({...e.rundown[0],start:'07:30'});}] as ((e:any)=>void)[]){const bad=structuredClone(c);mutate(bad.events[0]);assert.throws(()=>validateContent(bad));}
+  for(const mutate of [e=>{e.date='2026-02-30';},e=>{e.rundown[0].start='06:59';},e=>{e.rundown.push({...e.rundown[0],start:'06:59'});}] as ((e:any)=>void)[]){const bad=structuredClone(c);mutate(bad.events[0]);assert.throws(()=>validateContent(bad));}
+});
+test('parallel, overnight and milestone rundown rows retain credits and strict bounds',()=>{
+  const c=structuredClone(seed);c.events=[{id:'night',title:'Night',description:'Schedule',date:'2026-10-14',location:'Village',start:'05:30',end:'04:00',endNextDay:true,notify:true,rundown:[
+    {start:'21:30',end:'04:00',endNextDay:true,agenda:'Participant rest',location:'Home',speaker:'Teacher',coordinator:'Mentor'},
+    {start:'21:30',end:'22:30',agenda:'Committee evaluation',location:'Hall'},
+    {start:'22:30',end:'',agenda:'Committee rest',location:'Home'},
+  ]}];
+  assert.deepEqual(validateContent(c).events[0],c.events[0]);
+  for(const change of [e=>e.endNextDay=false,e=>e.rundown[0].endNextDay=false,e=>e.rundown[0].end='05:00',e=>e.rundown[1].end='',e=>e.rundown[2].endNextDay=true,e=>e.endNextDay='yes'] as ((e:any)=>void)[]){
+    const bad=structuredClone(c);change(bad.events[0] as any);
+    if(bad.events[0].rundown[1].end==='') assert.doesNotThrow(()=>validateContent(bad));else assert.throws(()=>validateContent(bad));
+  }
 });
 test('password verifiers are salted scrypt and cannot match a wrong or malformed verifier',async()=>{
   const value=await passwordHash('Only a disposable test password.');

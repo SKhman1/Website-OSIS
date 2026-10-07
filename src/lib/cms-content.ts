@@ -9,10 +9,10 @@ export interface CmsDepartment {
   id: string; number: string; name: string; description: string; photo: string;
   photoAlt: string; photoIsPlaceholder: boolean; chairId?: string | null; memberIds: string[]; programIds: string[]; results: CmsResult[];
 }
-export interface CmsRundown { start: string; end: string; agenda: string; location: string; }
+export interface CmsRundown { start: string; end: string; agenda: string; location: string; endNextDay?: boolean; speaker?: string; coordinator?: string; }
 export interface CmsEvent {
   id: string; title: string; description: string; date: string; location: string;
-  start: string; end: string; rundown: CmsRundown[]; notify: boolean;
+  start: string; end: string; rundown: CmsRundown[]; notify: boolean; endNextDay?: boolean;
 }
 export interface CmsIdentity { cabinetName: string; term: string; logo: string; logoAlt: string; }
 export interface CmsStatistics { members: number | null; programs: number | null; activities: number | null; }
@@ -90,15 +90,24 @@ export function validateContent(value: unknown): CmsContent {
     return {id: identifier(d.id), number, name: text(d.name,'Nama bidang',160), description: text(d.description,'Deskripsi',3000), photo: photo(d.photo), photoAlt: text(d.photoAlt,'Deskripsi foto',250), photoIsPlaceholder: boolean(d.photoIsPlaceholder), chairId: d.chairId == null ? null : identifier(d.chairId), memberIds: ids(d.memberIds), programIds: ids(d.programIds), results: results(d.results)};
   });
   const events = list(c.events, 100, item => {
-    const e = object(item, ['id','title','description','date','location','start','end','rundown','notify']);
-    const start = time(e.start), end = time(e.end); if (start >= end) fail('Jam selesai harus setelah jam mulai.');
+    const e = object(item, ['id','title','description','date','location','start','end','rundown','notify','endNextDay']);
+    const start = time(e.start), end = time(e.end), endNextDay = e.endNextDay === undefined ? false : boolean(e.endNextDay);
+    const minutes = (s: string) => Number(s.slice(0,2))*60+Number(s.slice(3));
+    const eventEnd = minutes(end) + (endNextDay ? 1440 : 0);
+    if (minutes(start) >= eventEnd || eventEnd-minutes(start)>1440) fail('Durasi acara harus positif dan maksimal 24 jam.');
     const rundown = list(e.rundown, 200, row => {
-      const r = object(row, ['start','end','agenda','location']); const a = time(r.start), b = time(r.end);
-      if (a >= b || a < start || b > end) fail('Jam rundown harus di dalam waktu acara.');
-      return {start: a, end: b, agenda: text(r.agenda,'Agenda',300), location: text(r.location,'Lokasi',200,true)};
+      const r = object(row, ['start','end','agenda','location','endNextDay','speaker','coordinator']);
+      const a = time(r.start), b = r.end === '' ? '' : time(r.end), nextDay = r.endNextDay === undefined ? false : boolean(r.endNextDay);
+      const finish = b ? minutes(b)+(nextDay?1440:0) : minutes(a);
+      if ((!b && nextDay) || (b && finish<=minutes(a)) || finish-minutes(a)>1440 || a<start || finish>eventEnd) fail('Jam rundown harus di dalam waktu acara. Kosongkan selesai untuk penanda waktu.');
+      return {start:a,end:b,agenda:text(r.agenda,'Agenda',300),location:text(r.location,'Lokasi',200,true),
+        ...(r.endNextDay !== undefined ? {endNextDay:nextDay} : {}),
+        ...(r.speaker !== undefined ? {speaker:text(r.speaker,'Narasumber',200,true)} : {}),
+        ...(r.coordinator !== undefined ? {coordinator:text(r.coordinator,'Penanggung jawab',200,true)} : {})};
     });
-    for (let i=1; i<rundown.length; i++) if (rundown[i].start < rundown[i-1].end) fail('Rundown harus berurutan tanpa jam bertumpuk.');
-    return {id: identifier(e.id), title: text(e.title,'Nama acara',160), description: text(e.description,'Deskripsi',3000), date: date(e.date), location: text(e.location,'Lokasi',200), start, end, rundown, notify: boolean(e.notify)};
+    // Parallel participant/committee sessions are real schedule entries, not conflicts.
+    for (let i=1; i<rundown.length; i++) if (rundown[i].start < rundown[i-1].start) fail('Rundown harus berurutan menurut jam mulai.');
+    return {id: identifier(e.id), title: text(e.title,'Nama acara',160), description: text(e.description,'Deskripsi',3000), date: date(e.date), location: text(e.location,'Lokasi',200), start, end, rundown, notify: boolean(e.notify), ...(e.endNextDay !== undefined ? {endNextDay} : {})};
   });
   for (const [items,name] of [[people,'pengurus'],[departments,'bidang'],[programs,'program'],[events,'acara']] as const) unique(items,name);
   if (people.filter(p => p.group === 'core').length !== 4 || coreIds.some(id => !people.some(p => p.id === id && p.group === 'core'))) fail('Keempat peran pengurus inti harus tersedia.');

@@ -99,6 +99,23 @@ Native dialog controls focus/inert state on mobile; desktop leaves menus usable.
 Animation uses transform/opacity and responds to interrupted inputs and resize.
 Source: https://github.com/LottieFiles/motion-design-skill/tree/main/skills/motion-design
 
+## Agenda and live schedule
+
+The homepage agenda uses a chronological day strip with a moving orange indicator.
+Desktop gives the rundown a wider reading column; mobile stacks the heading and
+panel and confines horizontal scrolling to the day strip. Current sessions are
+highlighted by WIB schedule, including parallel and overnight activities. A gap,
+future day and finished day each has explicit copy; single timestamps are milestones.
+The complete schedule, locations, speakers and coordinators remain in one disclosure.
+
+Day changes enter horizontally by 16px over 320ms; automatic session changes use
+240ms. The indicator explains the selected date. No autoplay carousel or new animation
+runtime. Repeated inputs cancel prior motion; reduced motion updates immediately.
+Unrelated CMS updates preserve focus, selected day and the open rundown.
+The default follows the current/next scheduled day as time advances. Choosing a
+date pauses that behavior; a return control restores it. Automatic changes never
+move focus away from a control inside the rundown.
+
 ## School-photo hero
 
 Lead with Vimsati Natta Darsa and explicitly label OSIS SMK Diponegoro 01.
