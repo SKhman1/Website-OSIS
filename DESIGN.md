@@ -101,6 +101,12 @@ Source: https://github.com/LottieFiles/motion-design-skill/tree/main/skills/moti
 
 ## Agenda and live schedule
 
+The native agenda editor offers local sheet/range preview, compact column mapping,
+and optional AI assistance behind an explicit send checkbox. Ordinary Qt controls
+follow the existing orange/neutral theme; scrolling accommodates small laptop
+windows. Missing titles/dates remain editable before applying an import. Cabinet
+identity includes an optional favicon with a clear “follow cabinet logo” default.
+
 The homepage agenda uses a chronological day strip with a moving orange indicator.
 Desktop gives the rundown a wider reading column; mobile stacks the heading and
 panel and confines horizontal scrolling to the day strip. Current sessions are

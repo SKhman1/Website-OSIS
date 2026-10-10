@@ -188,6 +188,49 @@ publication checks. Zero is valid; null remains explicitly labelled preview data
 Social contacts are lightweight local SVGs from Simple Icons (CC0):
 https://github.com/simple-icons/simple-icons; no third-party embed or tracking script.
 
+`identity.favicon` is optional: absent/null follows the cabinet logo. A custom
+favicon must use the same validated local image/media paths as other photographs.
+It participates in media existence and draft/public access checks. Older schema-2
+GUI saves that omit this field preserve its current draft setting; explicit null
+resets it. `/api/favicon` redirects only to the published icon/logo, with no-store
+and a static `/favicon.svg` fallback when CMS is unavailable. Public polling also
+refreshes the browser link after publication; no deploy is required for changes.
+
+## Flexible Excel and optional Groq mapping
+
+The desktop importer retains the existing exact presets. Flexible import selects
+one visible sheet and a bounded range (200 rows × 20 columns); it recognizes common
+header aliases, supports manual column mapping, and stores local coordinate presets
+without cell contents. The workbook never reaches Cloudflare/Groq. Formulas in
+the selected area, macros, external links and oversized ZIP/XML content are rejected.
+
+`POST /api/manage/agenda-ai` requires an active native owner/editor session and
+full owner MFA when applicable. Browser-origin requests remain rejected. The body
+is limited to 32 KB and the selected cell payload to 24,000 characters / 500 per
+cell. Users inspect a masked preview and explicitly choose AI assistance. Identified
+phone/email text is masked on both client and server; masking is not a guarantee
+that every kind of private data is detected. Select only public rundown content.
+
+The sole provider URL is Groq chat completions; `GROQ_API_KEY` is a Production secret.
+The model is `openai/gpt-oss-20b`, low reasoning effort, strict JSON schema, maximum
+3,000 completion tokens, 25-second timeout, no tools and no automatic retries or
+larger-model escalation. AI produces source coordinates, not rewritten activities
+or inferred dates/times. Unknown metadata must be completed in the editable preview.
+Local validation rejects missing/invented references, duplicate columns, invalid
+rows/times and oversized sessions before anything enters a draft. Cell text is
+untrusted data; the AI route has no content mutation or publication capability.
+
+Server quotas allow 10 attempts/account/hour and 100 total/day using atomic D1
+counters. Errors never echo upstream prompts, credentials or provider responses.
+Prompts/results are not stored in CMS; provider retention is controlled separately
+through Groq Data Controls. Revocation is checked again before returning a result.
+Manual import remains available without Groq. The GUI key is never embedded in
+source, browser assets, local settings or executable builds.
+
+`scripts/agenda-ai-remote-check.py https://vnd-smkdipo1.pages.dev` verifies real Groq
+with synthetic cells and a disposable editor removed in finally. It uses existing
+custodian Wrangler authorization and never publishes or submits aspirations.
+
 ## Department chair and member input
 
 Each department has one optional `chairId` and a separate `memberIds` list.

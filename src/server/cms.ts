@@ -3,8 +3,9 @@ import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 import { validateContent, contentPhotos, type CmsContent } from '../lib/cms-content';
 import { validateWebp } from './cms-media';
 import { newTotpSecret, sealSecret, openSecret, totpStep } from './cms-security';
+import { agendaModel, validateAgendaGrid, inferAgenda, AgendaAiError } from './agenda-ai';
 
-export interface CmsEnv { CMS_DB?: D1Database; CMS_MEDIA?: R2Bucket; CMS_ENABLED?: string; CMS_MFA_KEY?: string; }
+export interface CmsEnv { CMS_DB?: D1Database; CMS_MEDIA?: R2Bucket; CMS_ENABLED?: string; CMS_MFA_KEY?: string; GROQ_API_KEY?: string; }
 interface Account { id: string; username: string; password_hash: string; role: 'owner' | 'editor'; auth_epoch: number; mfa_verified?: number; }
 interface Security { secret: string|null; pending_secret: string|null; pending_expires: number; last_step: number; }
 interface State { version: number; draft: string; published: string; published_version: number; updated_at: number; }
@@ -239,8 +240,26 @@ export async function handleCms(request: Request, env: CmsEnv): Promise<Response
       await db.prepare('DELETE FROM cms_sessions WHERE token_hash=?').bind(hash(request.headers.get('authorization')!.slice(7))).run(); return json({ok:true});
     }
     const access=await handleAccess(request,env,db,user,path);if(access)return access;
+    if(path==='/api/manage/agenda-ai'&&request.method==='POST') {
+      if(!env.GROQ_API_KEY)error(503,'Bantuan AI belum dikonfigurasi. Gunakan pemetaan manual.');
+      try {
+        const grid=validateAgendaGrid(await body(request,32000));
+        await limit(db,`agenda-ai:${user.id}`,10,3600);
+        await limit(db,'agenda-ai:global',100,86400);
+        const plan=await inferAgenda(grid,env.GROQ_API_KEY);
+        // A revocation during inference cannot deliver data through an old session.
+        await account(request,db);
+        return json({ok:true,model:agendaModel,plan});
+      } catch(e){if(e instanceof AgendaAiError)error(e.status,e.message);throw e;}
+    }
     if (path==='/api/manage/content' && request.method==='GET') { const s=await state(db); return json({ok:true,version:s.version,publishedVersion:s.published_version,content:content(JSON.parse(s.draft))}); }
-    if (path==='/api/manage/content' && request.method==='PUT') { const data=await body(request); if ((data.content as {schemaVersion?:number})?.schemaVersion !== 2) error(409,'Perbarui aplikasi desktop sebelum menyimpan pengaturan.'); const value=content(data.content); await mediaExist(value,env); return await mutate(db,user,version(data.version),'save',value); }
+    if (path==='/api/manage/content' && request.method==='PUT') {
+      const data=await body(request); if ((data.content as {schemaVersion?:number})?.schemaVersion !== 2) error(409,'Perbarui aplikasi desktop sebelum menyimpan pengaturan.');
+      const value=content(data.content);
+      // Older schema-2 GUIs omit favicon; only explicit null resets it to the logo.
+      if(value.identity.favicon===undefined){const current=content(JSON.parse((await state(db)).draft));if(current.identity.favicon!==undefined)value.identity.favicon=current.identity.favicon;}
+      await mediaExist(value,env); return await mutate(db,user,version(data.version),'save',value);
+    }
     if (path==='/api/manage/publish' && request.method==='POST') {
       if (user.role!=='owner') error(403,'Hanya pemilik yang dapat menerbitkan konten.');
       const data=await body(request,1024); const s=await state(db); await mediaExist(content(JSON.parse(s.draft)),env); return await mutate(db,user,version(data.version),'publish');
@@ -297,4 +316,10 @@ export async function publicMedia(request: Request, env: CmsEnv): Promise<Respon
     else { const item=await env.CMS_DB.prepare('SELECT bytes FROM cms_assets WHERE key=?').bind(key).first<{bytes:number[]}>(); if(!item) error(404,'Foto tidak ditemukan.'); bytes=new Uint8Array(item.bytes); }
     return new Response(request.method==='HEAD'?null:bytes,{headers:{'Content-Type':'image/webp','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
   } catch(e) { return json({ok:false,error:'Foto tidak ditemukan.'},e instanceof HttpError&&e.status===405?405:404); }
+}
+export async function publicFavicon(request:Request,env:CmsEnv):Promise<Response> {
+  if(!['GET','HEAD'].includes(request.method))return json({error:'Metode tidak diizinkan.'},405);
+  let target='/favicon.svg';
+  try{if(env.CMS_ENABLED==='true'&&env.CMS_DB){const s=await state(env.CMS_DB),c=validateContent(JSON.parse(s.published));target=c.identity.favicon??c.identity.logo;}}catch{/* Static fallback while CMS is unavailable. */}
+  return new Response(null,{status:302,headers:{Location:target,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 }

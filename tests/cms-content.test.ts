@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateContent, contentPhotos, defaultIdentity, defaultStatistics, type CmsContent } from '../src/lib/cms-content';
-import { verifyPassword, passwordHash, handleCms, publicContent } from '../src/server/cms';
+import { verifyPassword, passwordHash, handleCms, publicContent, publicFavicon } from '../src/server/cms';
 import { validateWebp } from '../src/server/cms-media';
 const seed:CmsContent={schemaVersion:2,identity:defaultIdentity,statistics:defaultStatistics,vision:'Visi sekolah',missions:['Misi sekolah'],events:[],programs:[{id:'program-1',title:'Program',description:'Deskripsi',frequency:'Bulanan',details:[],goals:[]}],
   people:['ketua','wakil-ketua','sekretaris','bendahara'].map(id=>({id,group:'core',role:id,name:null,classLabel:'',introduction:'Perkenalan',photo:'/_astro/test.webp',photoAlt:'Foto',photoIsPlaceholder:true,programIds:[],results:[]})),
@@ -57,6 +57,20 @@ test('identity and statistics validate boundaries and include cabinet logo in pu
   const c=structuredClone(seed);c.statistics={members:0,programs:99999,activities:null};c.identity.logo='/api/media/11111111-1111-4111-8111-111111111111.webp';
   assert.equal(validateContent(c).statistics.members,0);assert.ok(contentPhotos(validateContent(c)).has(c.identity.logo));
   for(const mutate of [c=>{c.identity.term='2026/2028';},c=>{c.identity.logo='https://evil.test/logo.svg';},c=>{c.statistics.members=-1;},c=>{c.statistics.programs=1.5;},c=>{c.statistics.activities='2';},c=>{delete c.identity;},c=>{c.identity.secret='no';}] as ((c:any)=>void)[]){const bad=structuredClone(c);mutate(bad);assert.throws(()=>validateContent(bad));}
+});
+
+test('favicon follows published cabinet logo by default; custom icon is protected publication media',async()=>{
+  const c=structuredClone(seed);c.identity.favicon='/api/media/22222222-2222-4222-8222-222222222222.webp';
+  assert.ok(contentPhotos(validateContent(c)).has(c.identity.favicon));
+  const request=new Request('https://example.test/api/favicon');
+  const env=(content:any)=>({CMS_ENABLED:'true',CMS_DB:{prepare:()=>({first:async()=>({published:JSON.stringify(content)})})} as any});
+  assert.equal((await publicFavicon(request,env(seed))).headers.get('location'),seed.identity.logo);
+  assert.equal((await publicFavicon(request,env(c))).headers.get('location'),c.identity.favicon);
+  assert.equal((await publicFavicon(request,{})).headers.get('location'),'/favicon.svg');
+  assert.equal((await publicFavicon(new Request(request,{method:'HEAD'}),env(c))).status,302);
+  assert.equal((await publicFavicon(new Request(request,{method:'POST'}),env(c))).status,405);
+  for(const value of ['https://evil.test/icon.svg','javascript:alert(1)','/api/manage/content','']){const invalid=structuredClone(c);invalid.identity.favicon=value;assert.throws(()=>validateContent(invalid));}
+  c.identity.favicon=null;assert.equal(validateContent(c).identity.favicon,null);
 });
 
 test('field chair and members stay separate, accept legacy fields, reject invalid roles and duplicates',()=>{

@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
     QPushButton, QPlainTextEdit, QFormLayout, QListWidget, QStackedWidget, QScrollArea, QComboBox, QCheckBox,
     QDialog, QDialogButtonBox, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem, QHeaderView, QFrame)
 from client import Client, ApiError
-from importers import import_rundown, import_agenda, agenda_events, rundown_bounds, prepare_photo
+from importers import import_rundown, import_agenda, agenda_events, rundown_bounds, prepare_photo, prepare_favicon
+from agenda_ui import flexible_blocks
 from security_ui import ApiDialog, InvitationDialog, EnrollmentDialog, AccessDialog
 from gui_async import start_job
 from references import ReferencePicker
@@ -112,19 +113,27 @@ class AgendaImportDialog(QDialog):
         super().__init__(parent);self.blocks=copy.deepcopy(blocks);self.multi=multi;self.setWindowTitle("Preview import agenda");self.resize(1000,650)
         layout=QVBoxLayout(self);layout.addWidget(label("Pilih hari dan periksa jam sebelum menerapkan. Sesi paralel serta selesai esok hari didukung. Jam selesai kosong berarti penanda waktu."))
         self.select=QComboBox();self.select.addItems([f"{b['title'] or 'Rundown'} · {b['date'] or 'tanggal dari acara'}" for b in blocks]);layout.addWidget(self.select)
-        self.pages=QStackedWidget();self.editors=[];self.includes=[]
+        self.pages=QStackedWidget();self.editors=[];self.includes=[];self.titles=[];self.dates=[]
         for block in self.blocks:
             page=QWidget();body=QVBoxLayout(page)
             include=QCheckBox("Impor hari ini");include.setChecked(True);include.setVisible(multi);self.includes.append(include);body.addWidget(include)
+            metadata=QFormLayout();title=QLineEdit(block.get("title", ""));date=QLineEdit(block.get("date", ""));date.setPlaceholderText("YYYY-MM-DD; wajib untuk impor beberapa hari")
+            self.titles.append(title);self.dates.append(date);metadata.addRow("Judul kegiatan",title);metadata.addRow("Tanggal",date);body.addLayout(metadata)
+            if block.get("sourceRows"):body.addWidget(label(f"Sumber: {block['source']} · {len(block['sourceRows'])} baris. Arahkan kursor ke sel agenda untuk alamat sumber.","subtle"))
             if block["warnings"]: body.addWidget(label("\n".join(block["warnings"])))
-            editor=RowsEditor(RUNDOWN_COLUMNS,block["rundown"]);self.editors.append(editor);body.addWidget(editor);self.pages.addWidget(page)
+            editor=RowsEditor(RUNDOWN_COLUMNS,block["rundown"])
+            for r,source in enumerate(block.get("sourceRows",[])):editor.table.item(r,3).setToolTip(source)
+            self.editors.append(editor);body.addWidget(editor);self.pages.addWidget(page)
         layout.addWidget(self.pages);self.select.currentIndexChanged.connect(self.pages.setCurrentIndex)
         buttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Ok|QDialogButtonBox.StandardButton.Cancel);buttons.accepted.connect(self.check_accept);buttons.rejected.connect(self.reject);layout.addWidget(buttons)
     def selected_blocks(self):
         output=[]
         for i,block in enumerate(self.blocks):
             if (self.multi and self.includes[i].isChecked()) or (not self.multi and i==self.select.currentIndex()):
-                result=copy.deepcopy(block);result["rundown"]=self.editors[i].values();result.update(rundown_bounds(result["rundown"]));output.append(result)
+                result=copy.deepcopy(block);result["title"]=self.titles[i].text().strip();result["date"]=self.dates[i].text().strip()
+                if self.multi and (not result["title"] or not result["date"]):raise ValueError("Lengkapi judul dan tanggal setiap hari.")
+                if result["date"] and datetime.strptime(result["date"],"%Y-%m-%d").strftime("%Y-%m-%d")!=result["date"]:raise ValueError("Tanggal harus YYYY-MM-DD.")
+                result["rundown"]=self.editors[i].values();result.update(rundown_bounds(result["rundown"]));output.append(result)
         if not output: raise ValueError("Pilih minimal satu hari untuk diimpor.")
         return output
     def check_accept(self):
@@ -132,7 +141,7 @@ class AgendaImportDialog(QDialog):
         except ValueError as exc:message(self,"Periksa rundown",str(exc))
 
 FIELDS = {
-    "settings": [("cabinetName", "Nama angkatan OSIS", "text"), ("term", "Tahun ajaran (contoh: 2026/2027)", "text"), ("logo", "Logo angkatan (logo OSIS resmi tetap)", "photo"), ("logoAlt", "Deskripsi logo", "text")],
+    "settings": [("cabinetName", "Nama angkatan OSIS", "text"), ("term", "Tahun ajaran (contoh: 2026/2027)", "text"), ("logo", "Logo angkatan (logo OSIS resmi tetap)", "photo"), ("logoAlt", "Deskripsi logo", "text"), ("favicon", "Ikon tab / favicon (kosong = mengikuti logo angkatan)", "favicon")],
     "statistics": [("members", "Jumlah anggota OSIS", "count"), ("programs", "Jumlah program kerja", "count"), ("activities", "Jumlah kegiatan", "count")],
     "people": [("id", "ID profil", "id"), ("group", "Kelompok", "group"), ("role", "Peran", "text"), ("name", "Nama", "nullable"), ("classLabel", "Kelas", "text"), ("introduction", "Perkenalan", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("programIds", "Program kerja", "program_refs"), ("results", "Hasil kerja", "results")],
     "departments": [("id", "ID bidang", "id"), ("number", "Nomor bidang", "text"), ("name", "Nama bidang", "text"), ("description", "Deskripsi", "long"), ("photo", "Foto", "photo"), ("photoAlt", "Deskripsi foto", "text"), ("photoIsPlaceholder", "Foto masih contoh", "bool"), ("chairId", "Ketua seksi bidang", "chair_ref"), ("memberIds", "Anggota seksi bidang", "member_refs"), ("programIds", "Program kerja", "program_refs"), ("results", "Hasil kerja", "results")],
@@ -169,11 +178,15 @@ class Editor(QWidget):
                 if mode == "count":
                     validator = QIntValidator(0, 99999, widget); locale = QLocale.c(); locale.setNumberOptions(QLocale.NumberOption.RejectGroupSeparator); validator.setLocale(locale); widget.setValidator(validator); widget.setPlaceholderText("Kosong = belum dikonfirmasi; 0 = tidak ada")
             self.fields[key] = (widget, mode)
-            if mode == "photo":
+            if mode in ("photo", "favicon"):
                 container = QWidget(); row = QHBoxLayout(container); row.setContentsMargins(0, 0, 0, 0); row.addWidget(widget)
-                row.addWidget(button("Pilih foto…", lambda checked=False, w=widget: upload(w, self)))
+                if mode=="favicon":
+                    widget.setPlaceholderText("Mengikuti logo angkatan")
+                    row.addWidget(button("Pilih ikon…",lambda checked=False,w=widget:upload(w,self,True)))
+                    row.addWidget(button("Ikuti logo",lambda checked=False,w=widget:(w.clear(),self.changed.emit())))
+                else:row.addWidget(button("Pilih foto…", lambda checked=False, w=widget: upload(w, self)))
                 layout.addRow(caption, container)
-                if preview_photo: layout.addRow("", button("Preview foto", lambda checked=False, w=widget: preview_photo(w.text())))
+                if preview_photo: layout.addRow("", button("Preview ikon" if mode=="favicon" else "Preview foto", lambda checked=False, w=widget: preview_photo(w.text() or self.fields.get("logo",(w,None))[0].text())))
             else: layout.addRow(caption, widget)
         if kind == "departments" and content is not None:
             self.fields["chairId"][0].changed.connect(self.sync_chair)
@@ -201,7 +214,12 @@ class Editor(QWidget):
         path, _ = QFileDialog.getOpenFileName(self, "Pilih rundown", "", "Rundown (*.xlsx *.csv)")
         if not path: return
         try:
-            dialog = AgendaImportDialog(import_agenda(path),self)
+            try:blocks=import_agenda(path)
+            except ValueError as exc:
+                if Path(path).suffix.lower()!='.xlsx' or not message(self,"Format belum dikenali",str(exc)+"\n\nBuka pemetaan fleksibel?",True):return
+                blocks=flexible_blocks(self,self.window().client,path)
+            if blocks is None:return
+            dialog = AgendaImportDialog(blocks,self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 block=dialog.selected_blocks()[0];self.fields["rundown"][0].set_values(block["rundown"])
                 for key in ("start","end"):self.fields[key][0].setText(block[key])
@@ -219,7 +237,7 @@ class Editor(QWidget):
                 value = widget.toPlainText().strip()
                 if mode == "lines": value = [line.strip() for line in value.splitlines() if line.strip()]
             else: value = widget.text().strip()
-            if mode == "nullable" and not value: value = None
+            if mode in ("nullable","favicon") and not value: value = None
             if mode == "count": value = int(value) if value else None
             data[key] = value
         return data
@@ -269,6 +287,7 @@ class Window(QMainWindow):
         self.items.setWordWrap(True)
         self.add_button = button("Tambah", self.add_item); self.delete_button = button("Hapus", self.delete_item); left.addWidget(self.add_button); left.addWidget(self.delete_button); center.addLayout(left)
         self.import_agenda_button=button("Import agenda Excel…",self.import_events);self.import_agenda_button.setVisible(False);left.addWidget(self.import_agenda_button)
+        self.flexible_agenda_button=button("Import fleksibel / AI…",lambda:self.import_events(True));self.flexible_agenda_button.setVisible(False);left.addWidget(self.flexible_agenda_button)
         self.scroll = QScrollArea(); self.scroll.setWidgetResizable(True); center.addWidget(self.scroll, 1); layout.addLayout(center, 1)
         outer.addWidget(body, 1); return page
     def run(self, work, done):
@@ -336,6 +355,7 @@ class Window(QMainWindow):
         self.items.blockSignals(True); self.items.clear()
         self.items.setVisible(self.kind not in ("identity", "settings", "statistics")); self.add_button.setVisible(self.kind in ("people", "programs", "events")); self.delete_button.setVisible(self.kind in ("people", "programs", "events"))
         self.import_agenda_button.setVisible(self.kind=="events")
+        self.flexible_agenda_button.setVisible(self.kind=="events")
         if self.kind == "identity": self.show_editor(self.content)
         elif self.kind == "settings": self.show_editor(self.content["identity"])
         elif self.kind == "statistics": self.show_editor(self.content["statistics"])
@@ -355,11 +375,18 @@ class Window(QMainWindow):
         if row >= 0 and self.content and self.kind not in ("identity", "settings", "statistics"): self.show_editor(self.content[self.kind][row])
     def show_editor(self, item, existing=True):
         self.editor = Editor(self.kind, item, self.upload, existing, self.preview_photo, self.content, self.edit_reference); self.editor.changed.connect(self.mark_dirty); self.scroll.setWidget(self.editor)
-    def import_events(self):
+    def import_events(self, flexible=False):
         path,_=QFileDialog.getOpenFileName(self,"Pilih preset agenda Excel","","Agenda (*.xlsx)")
         if not path:return
         try:
-            dialog=AgendaImportDialog(import_agenda(path),self,multi=True)
+            if flexible:blocks=flexible_blocks(self,self.client,path)
+            else:
+                try:blocks=import_agenda(path)
+                except ValueError as exc:
+                    if not message(self,"Format belum dikenali",str(exc)+"\n\nBuka pemetaan fleksibel untuk memilih area tabel?",True):return
+                    blocks=flexible_blocks(self,self.client,path)
+            if blocks is None:return
+            dialog=AgendaImportDialog(blocks,self,multi=True)
             if dialog.exec()!=QDialog.DialogCode.Accepted:return
             events=agenda_events(dialog.selected_blocks());self.apply_form()
             for event in events:
@@ -426,7 +453,7 @@ class Window(QMainWindow):
         layout.addWidget(label("Periksa konten sebelum publikasi. Perubahan lokal perlu disimpan terlebih dahulu.", "subtle"))
         view = QPlainTextEdit(); view.setReadOnly(True)
         identity = self.content["identity"]; stats = self.content["statistics"]
-        lines = ["IDENTITAS ANGKATAN", identity["cabinetName"], identity["term"], f"Logo: {identity['logo']}", "", "STATISTIK", *[f"{caption}: {stats[key] if stats[key] is not None else 'Belum dikonfirmasi (angka contoh)'}" for key, caption in [("members", "Anggota OSIS"), ("programs", "Program kerja"), ("activities", "Kegiatan")]], "", "VISI", self.content["vision"], "", "MISI", *self.content["missions"], "", "PENGURUS"]
+        lines = ["IDENTITAS ANGKATAN", identity["cabinetName"], identity["term"], f"Logo: {identity['logo']}", f"Favicon: {identity.get('favicon') or 'Mengikuti logo angkatan'}", "", "STATISTIK", *[f"{caption}: {stats[key] if stats[key] is not None else 'Belum dikonfirmasi (angka contoh)'}" for key, caption in [("members", "Anggota OSIS"), ("programs", "Program kerja"), ("activities", "Kegiatan")]], "", "VISI", self.content["vision"], "", "MISI", *self.content["missions"], "", "PENGURUS"]
         def result_lines(items):
             output = []
             for item in items: output.extend([f"Hasil: {item['title']} · {item['date']}", item['description'], f"Foto hasil: {item.get('photo') or 'Tanpa foto'}"])
@@ -448,14 +475,14 @@ class Window(QMainWindow):
         if not message(self, "Publikasikan", f"Terbitkan seluruh draft v{self.version} ke website siswa?", True): return
         def done(result): self.version = result["version"]; self.status.setText(f"Versi {self.version} sudah terbit · website memperbarui konten dalam sekitar 30 detik")
         self.run(lambda: self.client.request("POST", "/api/manage/publish", {"version": self.version}), done)
-    def upload(self, target, editor):
-        path, _ = QFileDialog.getOpenFileName(self, "Pilih foto", "", "Foto (*.jpg *.jpeg *.png *.webp)")
+    def upload(self, target, editor, favicon=False):
+        path, _ = QFileDialog.getOpenFileName(self, "Pilih ikon tab" if favicon else "Pilih foto", "", "Gambar (*.jpg *.jpeg *.png *.webp)")
         if not path: return
         def done(result):
             target.setText(result["path"])
             if editor and "photoIsPlaceholder" in editor.fields: editor.fields["photoIsPlaceholder"][0].setChecked(False)
-            self.mark_dirty(); self.status.setText("Foto siap · isi deskripsi foto, lalu simpan draft")
-        self.run(lambda: self.client.request("POST", "/api/manage/media", photo=prepare_photo(path)), done)
+            self.mark_dirty(); self.status.setText("Ikon tab siap · simpan draft untuk diterbitkan" if favicon else "Foto siap · isi deskripsi foto, lalu simpan draft")
+        self.run(lambda: self.client.request("POST", "/api/manage/media", photo=(prepare_favicon if favicon else prepare_photo)(path)), done)
     def preview_photo(self, path):
         def done(data):
             pixmap = QPixmap()
@@ -520,6 +547,9 @@ def main():
             assert prepare_photo(photo)[8:12] == b'WEBP'
             book = Workbook(); book.active.append(['Mulai', 'Selesai', 'Agenda', 'Lokasi']); book.active.append(['07:00', '07:30', 'Uji', 'Aula'])
             sheet = Path(folder) / 'test.xlsx'; book.save(sheet); assert len(import_rundown(sheet)) == 1
+            from agenda_mapping import read_grid, detect_plans, mapped_blocks
+            grid=read_grid(sheet,book.active.title,'A1:D2');assert len(mapped_blocks(grid,detect_plans(grid))[0]['rundown'])==1
+            assert prepare_favicon(photo)[8:12]==b'WEBP'
             Client(BASE_URL)
         from login_check import begin_login_check
         state, cleanup = begin_login_check(app, window)

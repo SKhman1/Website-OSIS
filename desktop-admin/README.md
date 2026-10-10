@@ -153,3 +153,33 @@ program. Simpan draft terlebih dahulu, lalu publikasikan setelah diperiksa.
 Build Windows terbaru ada di `desktop-admin/dist-secure/VND-Console/`;
 launcher `start-admin.ps1` membuka versi ini. Folder versi lama dipertahankan agar
 jendela yang sedang digunakan dan perubahan lokal tidak terganggu.
+
+## Excel berbeda format dan bantuan AI
+
+Di **Kegiatan & rundown**, pilih **Import fleksibel / AI…**, pilih sheet dan area
+seperti `A1:H60`, lalu **Baca area lokal**. Kolom umum dideteksi otomatis. Periksa
+baris isi, sel judul/tanggal dan pilihan kolom; **Tambah tabel manual** tersedia
+untuk susunan lainnya. Pemetaan bisa disimpan sebagai preset lokal untuk dipakai
+ulang; preset menyimpan koordinat, bukan isi Excel. Periksa preset setiap kali
+baris/kolom berubah. Maksimal satu area 200 baris × 20 kolom, 12 tabel.
+
+Jika perlu, periksa preview dan centang izin pengiriman area tersebut, lalu pilih
+**Bantu baca dengan AI**. Hanya sel pada preview dikirim melalui API terautentikasi
+ke Groq. Nomor telepon/email yang dikenali disamarkan. Pilih hanya rundown publik;
+jangan sertakan kontak atau informasi privat. AI memakai GPT-OSS 20B untuk menunjuk
+sel sumber, tanpa menulis ulang jadwal. Tidak ada API key dalam aplikasi.
+
+Pilih **Periksa hasil pemetaan**, lengkapi tanggal/judul yang kosong dan periksa
+setiap jam di preview. Tooltip sel agenda menunjukkan baris sumber. Hasil baru
+masuk draft lokal; lanjutkan **Simpan draft ke server → Preview publikasi →
+Publikasikan** sesuai izin akun. Impor manual tetap bekerja saat Groq tidak tersedia.
+Formula di area terpilih harus diganti dengan salinan nilai biasa terlebih dahulu.
+
+## Favicon setiap angkatan
+
+Menu **Identitas angkatan** memuat **Ikon tab / favicon**. Kosongkan atau pilih
+**Ikuti logo** untuk mengikuti logo angkatan secara otomatis. **Pilih ikon…**
+mengunggah ikon khusus, dikonversi menjadi WebP transparan 256 × 256 tanpa metadata.
+Preview ikon tersedia. Simpan draft, periksa preview dan publikasikan; website
+mengikuti perubahan tanpa build ulang. Paket ZIP harus diekstrak seluruhnya;
+folder `_internal` tetap berada bersama `VND-Console.exe`.

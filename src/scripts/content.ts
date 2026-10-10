@@ -50,6 +50,7 @@ function photoUpdate(root: Element, source: string, alt: string, placeholder: bo
 }
 export function renderContent(content: CmsContent) {
   const {cabinetName,term,logo,logoAlt}=content.identity;
+  document.querySelectorAll<HTMLLinkElement>('[data-cms-favicon]').forEach(link=>{const source=content.identity.favicon??logo;if(link.getAttribute('href')!==source)link.href=source;});
   document.querySelectorAll('[data-cms-cabinet]').forEach(node=>node.textContent=cabinetName);
   document.querySelectorAll<HTMLElement>('[data-cms-term]').forEach(node=>node.textContent=`${node.dataset.cmsTerm}${term}`);
   document.querySelectorAll('[data-cms-cabinet-term]').forEach(node=>node.textContent=`${cabinetName} · ${term}`);

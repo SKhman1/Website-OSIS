@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import type { D1Database } from '@cloudflare/workers-types';
-import { handleCms, passwordHash, type CmsEnv } from '../src/server/cms';
+import { handleCms, passwordHash, publicMedia, type CmsEnv } from '../src/server/cms';
 import { sealSecret, openSecret, totp, totpStep } from '../src/server/cms-security';
 import { defaultIdentity, defaultStatistics, type CmsContent } from '../src/lib/cms-content';
 
@@ -42,7 +42,7 @@ test('RFC 6238 vectors; encrypted secret is bound to account/key and tamper dete
 });
 test('no registration/bootstrap, forged sessions denied; editor cannot administer users via direct API',async()=>{
   const db=new LocalD1();db.add('editor','editor',1,false);const token=db.session('editor');
-  for(const endpoint of ['accounts','audit','invitations'])assert.equal((await call(db,endpoint)).status,401);
+  for(const endpoint of ['accounts','audit','invitations','agenda-ai'])assert.equal((await call(db,endpoint)).status,401);
   assert.equal((await call(db,'accounts','GET',undefined,'0'.repeat(64))).status,401);
   for(const endpoint of ['accounts','audit','invitations'])assert.equal((await call(db,endpoint,'GET',undefined,token)).status,403);
   for(const endpoint of ['publish','restore','accounts/status','accounts/revoke-sessions','invitations','mfa/begin'])assert.equal((await call(db,endpoint,'POST',{role:'owner'},token)).status,403);
@@ -52,7 +52,7 @@ test('no registration/bootstrap, forged sessions denied; editor cannot administe
 test('old/password-only owner sessions cannot access content, history, publish, accounts or media upload',async()=>{
   const db=new LocalD1();db.add('owner','owner',1,false);const token=db.session('owner',false);
   for(const endpoint of ['content','history','accounts','audit'])assert.equal((await call(db,endpoint,'GET',undefined,token)).status,403);
-  for(const endpoint of ['publish','restore','content','media','password'])assert.equal((await call(db,endpoint,'POST',{},token)).status,403);
+  for(const endpoint of ['publish','restore','content','media','password','agenda-ai'])assert.equal((await call(db,endpoint,'POST',{},token)).status,403);
   const login=await call(db,'login','POST',{username:'owner',password});assert.equal(login.status,200);assert.equal(login.data.mfaPending,true);
   assert.equal((await call(db,'accounts','GET',undefined,login.data.token)).status,403);db.sqlite.close();
 });
@@ -130,4 +130,39 @@ test('revocation during body/media processing cannot commit a draft or publicati
     assert.equal((db.sqlite.prepare('SELECT version FROM cms_state').get() as any).version,0);
     assert.equal((db.sqlite.prepare('SELECT COUNT(*) AS n FROM cms_revisions').get() as any).n,0);db.sqlite.close();
   }
+});
+
+test('AI requires native active session, validates before inference, enforces quotas and rechecks revocation',async()=>{
+  const db=new LocalD1();db.add('editor','editor',1,false);const token=db.session('editor'),env={...db.env(),GROQ_API_KEY:'disposable-test-key'};
+  const grid={sheet:'QA',range:'A1:C5',cells:[{ref:'B5',value:'07:00-08:00'},{ref:'C5',value:'QA'}]};
+  const request=(body:any,extra:any={})=>new Request('https://local.test/api/manage/agenda-ai',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token,...extra},body:JSON.stringify(body)});
+  const original=globalThis.fetch;let count=0,revoke=false;
+  globalThis.fetch=(async()=>{count++;if(revoke)db.sqlite.exec("UPDATE cms_accounts SET enabled=0 WHERE id='editor'");return new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify({blocks:[{firstRow:5,lastRow:5,titleCell:'',dateCell:'',columns:{period:2,start:0,end:0,agenda:3,location:0,speaker:0,coordinator:0}}]})}}]}));}) as typeof fetch;
+  try{
+    assert.equal((await handleCms(request(grid,{Origin:'https://local.test'}),env)).status,403);
+    assert.equal((await handleCms(request({...grid,range:'A1:C999'}),env)).status,400);assert.equal(count,0);
+    for(let i=0;i<10;i++)assert.equal((await handleCms(request(grid),env)).status,200);
+    assert.equal((await handleCms(request(grid),env)).status,429);assert.equal(count,10);
+    db.sqlite.exec("DELETE FROM cms_login_limits WHERE bucket='agenda-ai:editor';UPDATE cms_login_limits SET attempts=100 WHERE bucket='agenda-ai:global'");
+    assert.equal((await handleCms(request(grid),env)).status,429);assert.equal(count,10);
+    db.sqlite.exec('DELETE FROM cms_login_limits');revoke=true;
+    assert.equal((await handleCms(request(grid),env)).status,401);assert.equal(count,11);
+  }finally{globalThis.fetch=original;db.sqlite.close();}
+});
+
+test('old schema-2 saves preserve favicon, explicit null resets, unpublished icon stays private',async()=>{
+  const db=new LocalD1();db.add('editor','editor',1,false);const token=db.session('editor');
+  const c=JSON.parse(fs.readFileSync('dist-pages/content-seed.json','utf8'));
+  const icon='/api/media/22222222-2222-4222-8222-222222222222.webp';c.identity.favicon=icon;
+  db.sqlite.prepare('INSERT INTO cms_assets(key,bytes,created_at) VALUES(?,?,0)').run(icon.slice('/api/media/'.length),new Uint8Array([1]));
+  const published=structuredClone(c);delete published.identity.favicon;
+  db.sqlite.prepare('INSERT INTO cms_state(id,version,draft,published,published_version,updated_at) VALUES(1,0,?,?,0,0)').run(JSON.stringify(c),JSON.stringify(published));
+  const old=structuredClone(c);delete old.identity.favicon;
+  assert.equal((await call(db,'content','PUT',{version:0,content:old},token)).status,200);
+  assert.equal(JSON.parse((db.sqlite.prepare('SELECT draft FROM cms_state').get() as any).draft).identity.favicon,icon);
+  assert.equal((await publicMedia(new Request('https://local.test'+icon),db.env())).status,404);
+  assert.equal((await publicMedia(new Request('https://local.test'+icon,{headers:{Authorization:'Bearer '+token}}),db.env())).status,200);
+  const reset={...old,identity:{...old.identity,favicon:null}};
+  assert.equal((await call(db,'content','PUT',{version:1,content:reset},token)).status,200);
+  assert.equal(JSON.parse((db.sqlite.prepare('SELECT draft FROM cms_state').get() as any).draft).identity.favicon,null);db.sqlite.close();
 });

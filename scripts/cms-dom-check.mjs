@@ -31,6 +31,10 @@ assert.equal(p.document.querySelector('[data-cms-cabinet]').textContent,c.identi
 assert.equal(p.document.querySelector('#hero-title img'),null);
 assert.match(p.document.querySelector('.school-photo-term').textContent,/2027\/2028/);
 assert.equal(p.document.querySelector('[data-cms-logo]').getAttribute('src'),c.identity.logo);
+assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href'),c.identity.logo);
+c.identity.favicon='/api/media/22222222-2222-4222-8222-222222222222.webp';p.render(c);
+assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href'),c.identity.favicon);
+c.identity.favicon=null;p.render(c);assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href'),c.identity.logo);
 assert.ok(p.document.querySelector('.brand-logo-custom'));
 assert.equal(p.document.querySelector('[data-cms-stat="members"] [data-counter]').dataset.value,'0');
 assert.equal(p.document.querySelector('[data-cms-stat="members"] .preview-badge').hidden,true);

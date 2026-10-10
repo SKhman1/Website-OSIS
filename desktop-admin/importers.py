@@ -105,6 +105,39 @@ def _preset(sheet, merges):
         blocks.append({"title":title,"date":dates[0],"rundown":result,"warnings":warnings,"source":sheet.title,**rundown_bounds(result)})
     return blocks
 
+def xlsx_metadata(path):
+    """Reject oversized/active packages before any workbook reader allocation."""
+    if Path(path).stat().st_size > 2 * 1024 * 1024: raise ValueError("Ukuran rundown maksimal 2 MB.")
+    with zipfile.ZipFile(path) as archive:
+        info = archive.infolist()
+        if len(info) > 200 or sum(i.file_size for i in info) > 20 * 1024 * 1024:
+            raise ValueError("Excel terlalu besar setelah diekstrak.")
+        if any("vba" in i.filename.lower() or "externallinks" in i.filename.lower() or i.flag_bits & 1 for i in info):
+            raise ValueError("Excel dengan macro, tautan eksternal, atau enkripsi tidak didukung.")
+        # Bound physical cell records before openpyxl allocates styles/merges.
+        from defusedxml.ElementTree import fromstring
+        from openpyxl.utils.cell import range_boundaries, coordinate_from_string, column_index_from_string
+        cells=0;merges_by_file={}
+        for entry in info:
+            if entry.filename.startswith("xl/worksheets/") and entry.filename.endswith(".xml"):
+                xml=fromstring(archive.read(entry))
+                merges_by_file[entry.filename]=[]
+                for e in xml.iter():
+                    if e.tag.endswith("}c"):
+                        cells+=1
+                        col,row=coordinate_from_string(e.attrib["r"])
+                        if row>2000 or column_index_from_string(col)>64: raise ValueError("Excel maksimal 2000 baris fisik dan 64 kolom per sheet.")
+                    elif e.tag.endswith("}mergeCell"):
+                        bounds=range_boundaries(e.attrib["ref"]);_,_,last_col,last_row=bounds
+                        if last_col>64 or last_row>2000: raise ValueError("Area gabungan sel Excel terlalu besar.")
+                        merges_by_file[entry.filename].append(bounds)
+                if cells>100000: raise ValueError("Excel maksimal 100.000 sel tersimpan.")
+        relations=fromstring(archive.read('xl/_rels/workbook.xml.rels'))
+        targets={e.attrib['Id']:posixpath.normpath(e.attrib['Target'].lstrip('/') if e.attrib['Target'].startswith('/') else 'xl/'+e.attrib['Target']) for e in relations}
+        structure=fromstring(archive.read('xl/workbook.xml'))
+        sheet_merges={e.attrib['name']:merges_by_file.get(targets.get(e.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id'),''),[]) for e in structure.iter() if e.tag.endswith('}sheet')}
+    return sheet_merges
+
 def import_agenda(path):
     """Read the supplied multi-day preset or the existing four-column format.
 
@@ -124,34 +157,7 @@ def import_agenda(path):
         if not block: raise ValueError("CSV harus memiliki kolom Mulai, Selesai, Agenda, Lokasi.")
         return [block]
     elif path.suffix.lower() == ".xlsx":
-        with zipfile.ZipFile(path) as archive:
-            info = archive.infolist()
-            if len(info) > 200 or sum(i.file_size for i in info) > 20 * 1024 * 1024:
-                raise ValueError("Excel terlalu besar setelah diekstrak.")
-            if any("vba" in i.filename.lower() or "externallinks" in i.filename.lower() or i.flag_bits & 1 for i in info):
-                raise ValueError("Excel dengan macro, tautan eksternal, atau enkripsi tidak didukung.")
-            # Bound physical cell records before openpyxl allocates styles/merges.
-            from defusedxml.ElementTree import fromstring
-            from openpyxl.utils.cell import range_boundaries, coordinate_from_string, column_index_from_string
-            cells=0;merges_by_file={}
-            for entry in info:
-                if entry.filename.startswith("xl/worksheets/") and entry.filename.endswith(".xml"):
-                    xml=fromstring(archive.read(entry))
-                    merges_by_file[entry.filename]=[]
-                    for e in xml.iter():
-                        if e.tag.endswith("}c"):
-                            cells+=1
-                            col,row=coordinate_from_string(e.attrib["r"])
-                            if row>2000 or column_index_from_string(col)>64: raise ValueError("Excel maksimal 2000 baris fisik dan 64 kolom per sheet.")
-                        elif e.tag.endswith("}mergeCell"):
-                            bounds=range_boundaries(e.attrib["ref"]);_,_,last_col,last_row=bounds
-                            if last_col>64 or last_row>2000: raise ValueError("Area gabungan sel Excel terlalu besar.")
-                            merges_by_file[entry.filename].append(bounds)
-                    if cells>100000: raise ValueError("Excel maksimal 100.000 sel tersimpan.")
-            relations=fromstring(archive.read('xl/_rels/workbook.xml.rels'))
-            targets={e.attrib['Id']:posixpath.normpath(e.attrib['Target'].lstrip('/') if e.attrib['Target'].startswith('/') else 'xl/'+e.attrib['Target']) for e in relations}
-            structure=fromstring(archive.read('xl/workbook.xml'))
-            sheet_merges={e.attrib['name']:merges_by_file.get(targets.get(e.attrib.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id'),''),[]) for e in structure.iter() if e.tag.endswith('}sheet')}
+        sheet_merges=xlsx_metadata(path)
         from openpyxl import load_workbook
         # Streaming mode skips embedded drawings/images and unrelated rich objects.
         workbook = load_workbook(path, read_only=True, data_only=False, keep_links=False)
@@ -218,3 +224,14 @@ def prepare_photo(path):
     if len(data) > 1024 * 1024:
         raise ValueError("Hasil foto masih terlalu besar.")
     return data
+
+def prepare_favicon(path):
+    """Reuse image limits, strip metadata and fit a transparent 256px square."""
+    data=prepare_photo(path)
+    with Image.open(io.BytesIO(data)) as source:
+        image=source.convert("RGBA");box=image.getchannel("A").getbbox()
+        if box:image=image.crop(box)
+        else:raise ValueError("Ikon tidak boleh sepenuhnya transparan.")
+        image=ImageOps.contain(image,(256,256),Image.Resampling.LANCZOS);canvas=Image.new("RGBA",(256,256));canvas.alpha_composite(image,((256-image.width)//2,(256-image.height)//2))
+        output=io.BytesIO();canvas.save(output,format="WEBP",quality=90,method=4)
+    return output.getvalue()

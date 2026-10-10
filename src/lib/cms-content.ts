@@ -14,7 +14,7 @@ export interface CmsEvent {
   id: string; title: string; description: string; date: string; location: string;
   start: string; end: string; rundown: CmsRundown[]; notify: boolean; endNextDay?: boolean;
 }
-export interface CmsIdentity { cabinetName: string; term: string; logo: string; logoAlt: string; }
+export interface CmsIdentity { cabinetName: string; term: string; logo: string; logoAlt: string; favicon?: string | null; }
 export interface CmsStatistics { members: number | null; programs: number | null; activities: number | null; }
 export const defaultIdentity: CmsIdentity = { cabinetName: 'Vimsati Natta Darsa', term: '2026/2027', logo: '/images/brand/cabinet-default.webp', logoAlt: 'Logo angkatan OSIS SMK Diponegoro 01' };
 export const defaultStatistics: CmsStatistics = { members: null, programs: null, activities: null };
@@ -67,10 +67,10 @@ export function validateContent(value: unknown): CmsContent {
   // Stored v1 documents and historical revisions retain their approved content.
   // Only missing v1 settings receive the original defaults; v2 writes are strict.
   if (c.schemaVersion === 1 && ('identity' in c || 'statistics' in c)) fail('Format pengaturan tidak valid.');
-  const i = object(c.schemaVersion === 1 ? defaultIdentity : c.identity, ['cabinetName','term','logo','logoAlt']);
+  const i = object(c.schemaVersion === 1 ? defaultIdentity : c.identity, ['cabinetName','term','logo','logoAlt','favicon']);
   const term = text(i.term, 'Tahun ajaran', 9);
   if (!/^\d{4}\/\d{4}$/.test(term) || Number(term.slice(5)) !== Number(term.slice(0,4)) + 1) fail('Tahun ajaran harus berurutan, misalnya 2026/2027.');
-  const identity = {cabinetName: text(i.cabinetName,'Nama angkatan',80), term, logo: photo(i.logo), logoAlt: text(i.logoAlt,'Deskripsi logo',250)};
+  const identity = {cabinetName: text(i.cabinetName,'Nama angkatan',80), term, logo: photo(i.logo), logoAlt: text(i.logoAlt,'Deskripsi logo',250), ...(i.favicon !== undefined ? {favicon:i.favicon === null ? null : photo(i.favicon)} : {})};
   const st = object(c.schemaVersion === 1 ? defaultStatistics : c.statistics, ['members','programs','activities']);
   function count(value: unknown): number | null { if (value === null) return null; if (!Number.isSafeInteger(value) || Number(value)<0 || Number(value)>99999) fail('Jumlah harus bilangan bulat 0–99999 atau belum dikonfirmasi.'); return Number(value); }
   const statistics = {members: count(st.members), programs: count(st.programs), activities: count(st.activities)};
@@ -125,6 +125,6 @@ export function validateContent(value: unknown): CmsContent {
 }
 export function contentPhotos(content: CmsContent): Set<string> {
   const items = [...content.people, ...content.departments];
-  return new Set([content.identity.logo, ...items.flatMap(item => [item.photo, ...item.results.flatMap(result => result.photo ? [result.photo] : [])])]);
+  return new Set([content.identity.logo, ...(content.identity.favicon ? [content.identity.favicon] : []), ...items.flatMap(item => [item.photo, ...item.results.flatMap(result => result.photo ? [result.photo] : [])])]);
 }
 export function personPath(person: CmsPerson) { return person.group === 'advisor' ? `/anggota/pembina/${person.id}` : `/anggota/${person.id}`; }
