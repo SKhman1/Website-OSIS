@@ -11,5 +11,5 @@ fi
 rm -rf -- "$project_dir/_internal"
 mv build-portable/package/VND-Console/_internal "$project_dir/_internal"
 cp build-portable/package/VND-Console/VND-Console "$project_dir/VND-Console"
-rm -rf -- "$project_dir/desktop-admin/build-portable/package"
+rm -rf -- "$project_dir/console/build-portable/package"
 printf 'Control panel: %s/VND-Console\n' "$project_dir"

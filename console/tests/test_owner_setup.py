@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parents[1] / "tools")]
 import importlib
 import sqlite3
 import subprocess
@@ -6,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 owner=importlib.import_module('cms-owner')
-ROOT=Path(__file__).resolve().parent.parent
+ROOT=Path(__file__).resolve().parents[2] / "web"
 
 class OwnerSetupTests(unittest.TestCase):
     def test_grant_is_bound_to_existing_enabled_owner_without_mfa(self):

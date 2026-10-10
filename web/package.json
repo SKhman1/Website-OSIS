@@ -8,11 +8,9 @@
     "check": "astro check",
     "build": "astro build",
     "start": "node dist/server/entry.mjs",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
-    "test:cms-dom": "node scripts/cms-dom-check.mjs",
-    "test:agenda-dom": "node scripts/agenda-dom-check.mjs",
+    "test:cms-dom": "node tests/cms-dom-check.mjs",
+    "test:agenda-dom": "node tests/agenda-dom-check.mjs",
     "build:pages": "astro build --config astro.pages.config.mjs",
     "preview:pages": "wrangler pages dev dist-pages --ip 127.0.0.1 --port 8788",
     "deploy:pages": "npm run build:pages && wrangler pages deploy dist-pages --project-name vnd-smkdipo1 --branch main"
@@ -20,24 +18,16 @@
   "dependencies": {
     "@astrojs/node": "11.1.6",
     "@fontsource-variable/manrope": "5.3.0",
-    "@libsql/client": "0.18.0",
     "astro": "7.3.5",
-    "dotenv": "18.0.5",
-    "drizzle-orm": "0.45.3"
-  },
-  "overrides": {
-    "@esbuild-kit/core-utils": {
-      "esbuild": "0.25.12"
-    }
+    "dotenv": "18.0.5"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@cloudflare/workers-types": "^5.20261003.1",
     "@types/node": "26.6.4",
-    "drizzle-kit": "0.31.11",
     "happy-dom": "20.14.5",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "wrangler": "4.146.0"
+    "wrangler": "4.149.0"
   }
 }

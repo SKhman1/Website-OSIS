@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parents[1] / "tools")]
 import copy
 import io
 import json
@@ -13,8 +16,6 @@ from PIL import Image
 from client import Client
 from importers import import_rundown, prepare_photo
 from main import Window, Editor, STYLE
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 from importlib import import_module
 encode_password = import_module("cms-owner").encode_password
 from gui_async import start_job
@@ -26,7 +27,7 @@ class Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.app = QApplication.instance() or QApplication([]); cls.app.setStyleSheet(STYLE)
-        cls.root = Path(__file__).resolve().parent.parent
+        cls.root = Path(__file__).resolve().parents[2] / "web"
         cls.seed = json.loads((cls.root / "dist-pages/content-seed.json").read_text(encoding="utf-8"))
     def test_credentials_not_persisted_or_redirected(self):
         for url in ["http://example.com", "https://user:password@example.com", "https://example.com?token=secret"]:

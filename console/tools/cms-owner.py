@@ -135,9 +135,9 @@ def show_activation(username, activation):
     dialog.exec();output.clear()
 
 def launch_enrollment(project, username, password, activation, base_url='https://vnd-smkdipo1.pages.dev'):
-    # This privileged helper stays in scripts/ and requires the custodian's
+    # This privileged helper requires the custodian's
     # Wrangler login. The distributable panel cannot issue its own grants.
-    sys.path.insert(0,str(Path(project).resolve()/'desktop-admin'))
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
     from client import Client,ApiError
     from main import Window,STYLE
     from security_ui import EnrollmentDialog
@@ -167,7 +167,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode',choices=['bootstrap','recover','authorize-mfa'])
     parser.add_argument('--database',required=True)
-    parser.add_argument('--project',default=str(Path(__file__).resolve().parent.parent))
+    parser.add_argument('--project',default=str(Path(__file__).resolve().parents[2]/'web'))
     parser.add_argument('--local',action='store_true')
     parser.add_argument('--username',help='Username owner (opsional; jika kosong ditanyakan secara interaktif).')
     parser.add_argument('--show-activation',action='store_true',help='Tampilkan kode secara lokal dalam dialog native, tanpa mencetak ke terminal.')

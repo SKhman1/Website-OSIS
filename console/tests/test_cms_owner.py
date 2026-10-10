@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parents[1] / "tools")]
 import importlib
 import sqlite3
 import unittest
@@ -7,7 +10,7 @@ owner=importlib.import_module('cms-owner')
 class Tests(unittest.TestCase):
     def test_bootstrap_never_resets_existing_accounts(self):
         db=sqlite3.connect(':memory:')
-        for name in ['0001_content.sql','0002_access.sql','0003_enrollment.sql']:db.executescript((Path(__file__).resolve().parent.parent/'migrations/cms'/name).read_text())
+        for name in ['0001_content.sql','0002_access.sql','0003_enrollment.sql']:db.executescript((Path(__file__).resolve().parents[2] / "web"/'migrations/cms'/name).read_text())
         db.executescript(owner.account_sql('bootstrap','qa-first','Disposable test owner password.'))
         initial=db.execute('SELECT id,username,password_hash,auth_epoch FROM cms_accounts').fetchall()
         db.executescript(owner.account_sql('bootstrap','qa-first','Changed test password for attempted reset.'))
@@ -16,7 +19,7 @@ class Tests(unittest.TestCase):
         db.close()
     def test_recovery_does_not_promote_editor_and_revokes_owner_access(self):
         db=sqlite3.connect(':memory:')
-        for name in ['0001_content.sql','0002_access.sql','0003_enrollment.sql']:db.executescript((Path(__file__).resolve().parent.parent/'migrations/cms'/name).read_text())
+        for name in ['0001_content.sql','0002_access.sql','0003_enrollment.sql']:db.executescript((Path(__file__).resolve().parents[2] / "web"/'migrations/cms'/name).read_text())
         db.executescript(owner.account_sql('bootstrap','qa-owner','Disposable test owner password.'))
         id=db.execute('SELECT id FROM cms_accounts').fetchone()[0]
         db.execute("INSERT INTO cms_accounts VALUES('editor','qa-editor','dummy','editor',1,1,0)")

@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parents[1] / "tools")]
 """Synthetic workbook fixtures; no private source workbook is committed."""
 import os
 os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
