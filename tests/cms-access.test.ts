@@ -133,7 +133,7 @@ test('revocation during body/media processing cannot commit a draft or publicati
 });
 
 test('AI requires native active session, validates before inference, enforces quotas and rechecks revocation',async()=>{
-  const db=new LocalD1();db.add('editor','editor',1,false);const token=db.session('editor'),env={...db.env(),GROQ_API_KEY:'disposable-test-key'};
+  const db=new LocalD1();db.add('editor','editor',1,false);const token=db.session('editor'),env={...db.env(),GROQ_API_KEY:'disposable-groq-test-key'};
   const grid={sheet:'QA',range:'A1:C5',cells:[{ref:'B5',value:'07:00-08:00'},{ref:'C5',value:'QA'}]};
   const request=(body:any,extra:any={})=>new Request('https://local.test/api/manage/agenda-ai',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token,...extra},body:JSON.stringify(body)});
   const original=globalThis.fetch;let count=0,revoke=false;
