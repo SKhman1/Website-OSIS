@@ -19,6 +19,10 @@ desktop-admin/dist-portable/
 desktop-admin/dist-members/
 desktop-admin/dist-secure/
 desktop-admin/build-portable/
+/VND-Console.exe
+/VND-Console
+/_internal/
+/VND-Console-Windows.zip
 desktop-admin/*.spec
 !desktop-admin/console.spec
 __pycache__/

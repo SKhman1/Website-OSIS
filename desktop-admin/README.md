@@ -6,9 +6,10 @@ pengembangan; build Windows sudah menyertakan runtime.
 
 ## Buka di Windows
 
-Jalankan `dist-secure/VND-Console/VND-Console.exe`, atau `start-admin.ps1` dari folder ini.
-Pertahankan seluruh folder `VND-Console`, termasuk `_internal`; jangan memindahkan
-EXE sendirian. Alamat website: `https://vnd-smkdipo1.pages.dev`.
+Jalankan `VND-Console.exe` atau `start-admin.ps1` dari folder utama proyek
+`Website-OSIS`. Folder `_internal` harus tetap berada di samping EXE;
+jangan memindahkan EXE sendirian. Launcher di folder `desktop-admin` juga
+mengarah ke EXE yang sama. Alamat website: `https://vnd-smkdipo1.pages.dev`.
 
 Control panel tidak lagi menyediakan setup/reset akun lokal. Konfigurasi Cloudflare,
 domain, database, dan deployment tetap dipegang pemilik infrastruktur. Pengurus
@@ -150,9 +151,11 @@ menampilkan pilihan nama; gunakan **Tambah ketua…**, **Tambah anggota…**, at
 Tidak perlu mengetik ID. Ketua otomatis dikeluarkan dari pilihan anggota agar
 namanya tidak muncul dua kali. Preview publikasi menampilkan nama dan judul
 program. Simpan draft terlebih dahulu, lalu publikasikan setelah diperiksa.
-Build Windows terbaru ada di `desktop-admin/dist-secure/VND-Console/`;
-launcher `start-admin.ps1` membuka versi ini. Folder versi lama dipertahankan agar
-jendela yang sedang digunakan dan perubahan lokal tidak terganggu.
+Build Windows terbaru ada langsung di folder utama proyek: `VND-Console.exe`
+dan `_internal/`. Build berikutnya memperbarui lokasi yang sama; tutup aplikasi
+sebelum build. Paket `dist`, `dist-members`, `dist-portable`, dan `dist-secure`
+lama dipindahkan ke arsip terpisah di luar proyek. Source, pengaturan login,
+dan preset lokal tetap disimpan.
 
 ## Excel berbeda format dan bantuan AI
 

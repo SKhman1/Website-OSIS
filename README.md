@@ -278,4 +278,5 @@ access; the infrastructure custodian alone controls Cloudflare/domain/configurat
 See [SECURITY.md](SECURITY.md) and [desktop-admin/README.md](desktop-admin/README.md).
 Use `wrangler.example.jsonc` and your own URL/database/secrets for forks. This
 change does not publish the private repository or grant hosting access to council
-accounts. Build output is `desktop-admin/dist-secure/VND-Console/`.
+accounts. Build output is `VND-Console.exe` with its `_internal/` runtime beside it
+in the project root. Open the EXE or run the root `start-admin.ps1` launcher.
