@@ -76,6 +76,38 @@ class Tests(unittest.TestCase):
         enroll=EnrollmentDialog(window,client);enroll.started(dict(secret='A'*32))
         self.assertTrue(enroll.finish.isEnabled());self.assertIn('A'*32,enroll.output.toPlainText())
         window.lock();self.assertEqual(enroll.output.toPlainText(),'');self.assertEqual(dialog.output.toPlainText(),'');window.close()
+    def test_first_owner_setup_waits_for_key_before_requesting_totp(self):
+        client=Client('https://example.com');client.user=dict(username='qa-owner',role='owner')
+        window=Window(self.root);dialog=EnrollmentDialog(window,client);sent=[]
+        dialog.call=lambda path,data,done,method='POST':sent.append((path,data,done))
+        self.assertFalse(dialog.code.isEnabled());self.assertEqual(dialog.code.text(),'')
+        self.assertTrue(dialog.confirmation.isHidden());self.assertFalse(dialog.finish.isEnabled())
+        dialog.activation.setText('not-an-activation');dialog.current.setText('Disposable old password')
+        dialog.begin_setup();self.assertEqual(sent,[]);self.assertIn('64 karakter',dialog.status.text())
+        dialog.activation.setText('a'*64);dialog.begin_setup()
+        self.assertEqual(sent[0][0],'/api/manage/mfa/begin');self.assertNotIn('code',sent[0][1])
+        sent[0][2](dict(secret='A'*32))
+        self.assertTrue(dialog.code.isEnabled());self.assertFalse(dialog.confirmation.isHidden());self.assertEqual(dialog.code.text(),'')
+        self.assertFalse(dialog.qr.pixmap().isNull());self.assertTrue(dialog.first.isHidden());self.assertTrue(dialog.output.isHidden())
+        dialog.code.setText('123456');dialog.next.setText('short');dialog.confirm.setText('short')
+        dialog.confirm_setup();self.assertEqual(len(sent),1);self.assertIn('15',dialog.status.text())
+        dialog.next.setText('Disposable new password');dialog.confirm.setText('Disposable new password');dialog.confirm_setup()
+        self.assertEqual(sent[1][0],'/api/manage/mfa/confirm');self.assertEqual(sent[1][1]['code'],'123456')
+        self.assertEqual(dialog.current.text(),'Disposable old password');self.assertEqual(dialog.next.text(),'Disposable new password');self.assertEqual(dialog.code.text(),'')
+        # A wrong/expired factor must be retryable even though step 1 is hidden.
+        dialog.code.setText('654321');dialog.confirm_setup();self.assertEqual(sent[2][1]['current'],'Disposable old password')
+        sent[2][2](dict(recoveryCodes=['qa-recovery']))
+        self.assertEqual(dialog.current.text(),'');self.assertEqual(dialog.next.text(),'');self.assertTrue(dialog.qr.pixmap().isNull())
+        window.close()
+    def test_authenticator_key_validation_expiry_and_lock_clear_qr(self):
+        from security_ui import authenticator_qr
+        for secret in ('SHORT','a'*64,'A'*31,None):
+            with self.assertRaises(ValueError):authenticator_qr(secret,'qa-owner')
+        client=Client('https://example.com');client.user=dict(username='qa-owner',role='owner')
+        window=Window(self.root);dialog=EnrollmentDialog(window,client);dialog.started(dict(secret='A'*32));dialog.expired()
+        self.assertTrue(dialog.qr.pixmap().isNull());self.assertEqual(dialog.output.toPlainText(),'');self.assertFalse(dialog.finish.isEnabled());self.assertFalse(dialog.first.isHidden())
+        dialog.started(dict(secret='B'*32));window.lock()
+        self.assertTrue(dialog.qr.pixmap().isNull());self.assertEqual(dialog.output.toPlainText(),'');window.close()
     def test_forms_preserve_results_and_all_core_fields(self):
         for kind in ("people", "departments", "programs"):
             original = copy.deepcopy(self.seed[kind][0]); editor = Editor(kind, original, lambda *_: None)

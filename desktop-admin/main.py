@@ -263,7 +263,8 @@ class Window(QMainWindow):
         self.url = QLineEdit(base_url if base_url != BASE_URL else self.settings.value("apiUrl", base_url)); self.username = QLineEdit(self.settings.value("username", "")); self.password = QLineEdit(); self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.password.returnPressed.connect(self.login)
         self.code = QLineEdit(); self.code.setPlaceholderText("Owner: kode autentikator / pemulihan; kosong saat setup pertama"); self.code.returnPressed.connect(self.login)
-        form.addRow("Alamat website", self.url); form.addRow("Username", self.username); form.addRow("Password", self.password); form.addRow("Kode autentikator", self.code)
+        self.code.setPlaceholderText("Kosongkan saat aktivasi pertama")
+        form.addRow("Alamat website", self.url); form.addRow("Username", self.username); form.addRow("Password", self.password); form.addRow("Kode autentikator (jika sudah aktif)", self.code)
         outer.addLayout(form); self.login_button = button("Masuk", self.login, True); outer.addWidget(self.login_button)
         outer.addWidget(button("Saya memiliki undangan pengurus…", self.accept_invitation))
         self.login_status = label("Password tidak disimpan. Sesi terkunci setelah 15 menit tanpa aktivitas.", "subtle"); outer.addWidget(self.login_status); outer.addStretch()
@@ -517,6 +518,7 @@ class Window(QMainWindow):
     def lock(self):
         if self.busy or any(dialog.busy for dialog in self.findChildren(ApiDialog)): self.lock_timer.start(30_000); return
         for dialog in self.findChildren(ApiDialog):
+            if isinstance(dialog,EnrollmentDialog):dialog.clear_sensitive()
             for field in dialog.findChildren(QLineEdit): field.clear()
             for field in dialog.findChildren(QPlainTextEdit): field.clear()
             dialog.reject()
@@ -551,6 +553,8 @@ def main():
             grid=read_grid(sheet,book.active.title,'A1:D2');assert len(mapped_blocks(grid,detect_plans(grid))[0]['rundown'])==1
             assert prepare_favicon(photo)[8:12]==b'WEBP'
             Client(BASE_URL)
+            from security_ui import authenticator_qr
+            assert authenticator_qr('A'*32,'qa-owner').startswith(b'\x89PNG')
         from login_check import begin_login_check
         state, cleanup = begin_login_check(app, window)
         try:

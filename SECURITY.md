@@ -64,6 +64,19 @@ python scripts/cms-owner.py recover --database NAMA_DATABASE
 python scripts/cms-owner.py authorize-mfa --database NAMA_DATABASE
 ```
 
+Untuk aktivasi owner yang sudah ada, pemilik infrastruktur dapat menjalankan
+`./setup-owner.ps1 -Database NAMA_DATABASE -Username USERNAME`, atau
+`python scripts/cms-owner.py authorize-mfa --database NAMA_DATABASE --username USERNAME --enroll`.
+Password diminta secara privat melalui terminal; grant dibuat lewat Wrangler,
+lalu dialog native langsung menampilkan QR Google Authenticator. Setup tetap
+memerlukan konfirmasi kode dari HP dan password baru. Helper ini tidak masuk
+paket GUI pengurus dan tidak membuat/memulihkan akun secara otomatis.
+QR/kunci hanya berada dalam memori, dibersihkan saat selesai/terkunci, dan
+kedaluwarsa setelah 10 menit. `--show-activation` menampilkan kode aktivasi
+secara lokal bila alur manual diperlukan, tanpa mencetak kode ke terminal.
+Fork harus menentukan `--url` (atau `-Url` pada launcher PowerShell) sesuai
+deployment sendiri. Setup dengan `--local --enroll` memerlukan URL localhost.
+
 Tambahkan `--local` untuk database pengujian. Target database wajib disebut.
 Password diketik melalui getpass, tidak lewat argumen. Bootstrap hanya membuat
 owner pertama jika tabel akun kosong; tidak pernah mereset akun lama. Recovery

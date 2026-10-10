@@ -18,7 +18,9 @@ berikutnya hanya mengelola konten melalui akun yang diundang owner panel.
 1. Owner yang sudah ada login memakai password. Kosongkan kode saat aktivasi MFA pertama.
 2. Pada dialog keamanan, masukkan kode aktivasi owner dari pemilik infrastruktur
    (atau kode dari hasil penerimaan undangan owner), password saat ini, buat kunci autentikator, lalu
-   tambahkan secara manual ke aplikasi authenticator (TOTP, 6 digit, 30 detik).
+   scan QR melalui Google Authenticator: **+ → Pindai kode QR**. Pilihan kunci
+   manual tersedia sebagai alternatif (TOTP, 6 digit, 30 detik). Kode aktivasi
+   64 karakter hanya untuk panel; jangan memasukkannya ke Google Authenticator.
 3. Masukkan kode yang cocok dan password baru yang berbeda. Simpan sepuluh kode
    pemulihan secara pribadi; kode hanya ditampilkan sekali. Login lagi dengan
    password baru dan kode authenticator berikutnya, setelah pergantian 30 detik.

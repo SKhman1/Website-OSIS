@@ -1,8 +1,13 @@
 """Native access management. No Cloudflare SDK, local account setup or stored secrets."""
 from datetime import datetime
+import re
+import io
+from urllib.parse import quote
+import qrcode
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QLineEdit, QLabel,
-    QPushButton, QComboBox, QPlainTextEdit, QListWidget, QMessageBox)
+    QPushButton, QComboBox, QPlainTextEdit, QListWidget, QMessageBox, QWidget, QScrollArea, QFrame)
 from gui_async import start_job
 
 def caption(text):
@@ -13,6 +18,14 @@ def notice(parent, text):
 
 def secret_field():
     field=QLineEdit();field.setEchoMode(QLineEdit.EchoMode.Password);return field
+
+def authenticator_qr(secret, username):
+    if not isinstance(secret,str) or not re.fullmatch(r'[A-Z2-7]{32}',secret):
+        raise ValueError('Kunci autentikator dari server tidak valid. Buat ulang setup.')
+    uri='otpauth://totp/'+quote('OSIS:'+username,safe='')+'?secret='+secret+'&issuer=OSIS&algorithm=SHA1&digits=6&period=30'
+    qr=qrcode.QRCode(box_size=4,border=4,error_correction=qrcode.constants.ERROR_CORRECT_M)
+    qr.add_data(uri);qr.make(fit=True);stream=io.BytesIO();qr.make_image(fill_color='black',back_color='white').save(stream,format='PNG')
+    return stream.getvalue()
 
 class ApiDialog(QDialog):
     def __init__(self,parent,client,title):
@@ -60,24 +73,57 @@ class EnrollmentDialog(ApiDialog):
     def __init__(self,parent,client):
         super().__init__(parent,client,'Aktifkan autentikasi dua langkah · Owner')
         self.completed=False
-        self.layout.addWidget(caption('Akun owner belum dapat membuka konten sampai autentikator aktif. Tambahkan kunci di aplikasi autentikator melalui pilihan masukkan kunci manual: TOTP, 6 digit, 30 detik. Kunci dan kode pemulihan tidak disimpan di laptop ini.'))
-        self.form=QFormLayout();self.current=secret_field();self.code=QLineEdit();self.code.setMaxLength(6);self.next=secret_field();self.confirm=secret_field()
-        self.activation=secret_field();self.form.addRow('Kode aktivasi dari pemilik / undangan',self.activation)
-        self.form.addRow('Password saat ini',self.current);self.layout.addLayout(self.form)
-        self.begin=QPushButton('Buat kunci autentikator');self.begin.clicked.connect(self.begin_setup);self.layout.addWidget(self.begin)
-        self.output=QPlainTextEdit();self.output.setReadOnly(True);self.output.setMaximumHeight(180);self.layout.addWidget(self.output)
-        self.form.addRow('Kode autentikator',self.code);self.form.addRow('Password baru (wajib diganti)',self.next);self.form.addRow('Ulangi password baru',self.confirm)
+        self.scroll=QScrollArea();self.scroll.setWidgetResizable(True);self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.body=QWidget();self.controls=QVBoxLayout(self.body);self.controls.setContentsMargins(0,0,0,0);self.scroll.setWidget(self.body);self.layout.addWidget(self.scroll)
+        self.instructions=caption('Langkah 1 dari 2 · Buat kunci autentikator\nIsi kode aktivasi owner dari script Cloudflare dan password saat ini. Kode 6 digit dari HP baru diperlukan pada langkah berikutnya.')
+        self.controls.addWidget(self.instructions)
+        self.first=QWidget();self.form=QFormLayout(self.first);self.form.setContentsMargins(0,0,0,0);self.current=secret_field();self.code=QLineEdit();self.code.setMaxLength(6);self.next=secret_field();self.confirm=secret_field()
+        self.activation=secret_field();self.activation.setMaxLength(64);self.activation.setPlaceholderText('64 karakter dari script atau undangan owner');self.form.addRow('Kode aktivasi owner',self.activation)
+        self.form.addRow('Password saat ini',self.current);self.controls.addWidget(self.first)
+        self.begin=QPushButton('Buat QR Google Authenticator');self.begin.clicked.connect(self.begin_setup);self.controls.addWidget(self.begin)
+        self.qr=QLabel();self.qr.setAlignment(Qt.AlignmentFlag.AlignCenter);self.qr.setAccessibleName('QR aktivasi Google Authenticator');self.controls.addWidget(self.qr);self.qr.hide()
+        self.manual=QPushButton('Lihat kunci manual sebagai alternatif');self.manual.clicked.connect(lambda:self.output.setVisible(self.output.isHidden()));self.controls.addWidget(self.manual);self.manual.hide()
+        self.output=QPlainTextEdit();self.output.setReadOnly(True);self.output.setMaximumHeight(150);self.controls.addWidget(self.output);self.output.hide()
+        self.confirmation=QWidget();confirmation_layout=QFormLayout(self.confirmation);confirmation_layout.setContentsMargins(0,0,0,0)
+        self.code.setPlaceholderText('6 digit dari aplikasi authenticator');self.code.setEnabled(False)
+        confirmation_layout.addRow('Kode autentikator dari HP',self.code);confirmation_layout.addRow('Password baru (15–128 karakter)',self.next);confirmation_layout.addRow('Ulangi password baru',self.confirm)
+        self.controls.addWidget(self.confirmation);self.confirmation.hide()
         self.finish=QPushButton('Konfirmasi autentikator');self.finish.setEnabled(False);self.finish.clicked.connect(self.confirm_setup);self.layout.addWidget(self.finish)
     def begin_setup(self):
+        if not re.fullmatch(r'[a-f0-9]{64}',self.activation.text().strip()):
+            self.status.setText('Kode aktivasi owner harus 64 karakter dari script authorize-mfa atau undangan owner. Kolom ini bukan password.');self.activation.setFocus();return
+        if not self.current.text():self.status.setText('Isi password akun owner saat ini.');self.current.setFocus();return
         self.call('/api/manage/mfa/begin',dict(current=self.current.text(),activation=self.activation.text().strip()),self.started)
     def started(self,result):
-        self.output.setPlainText('Kunci manual: '+result['secret']+'\n\nLabel: OSIS / '+self.client.user['username']+'\nTipe: TOTP · 6 digit · 30 detik\nBerlaku 10 menit. Jangan bagikan kunci ini.');self.finish.setEnabled(True)
+        pixmap=QPixmap()
+        if not pixmap.loadFromData(authenticator_qr(result['secret'],self.client.user['username'])):raise ValueError('QR tidak dapat ditampilkan. Buat ulang setup.')
+        self.qr.setPixmap(pixmap);self.qr.show();self.first.hide();self.begin.hide();self.manual.show();self.output.hide()
+        self.instructions.setText('Langkah 2 dari 2 · Scan dengan Google Authenticator\nDi HP, tekan + → Pindai kode QR. Scan QR ini, lalu isi kode 6 digit dari entri OSIS yang baru dibuat. Pilih password baru 15–128 karakter. Selesaikan dalam 10 menit; jam HP harus otomatis.')
+        self.output.setPlainText('Kunci pengaturan Google Authenticator: '+result['secret']+'\n\nLabel: OSIS / '+self.client.user['username']+'\nTipe: berbasis waktu (TOTP), 6 digit, 30 detik.\nIni kunci untuk HP, bukan kode aktivasi owner. Jangan bagikan.');self.confirmation.show();self.code.clear();self.code.setEnabled(True);self.code.setFocus();self.finish.setEnabled(True)
+        if hasattr(self,'expiry'):self.expiry.stop()
+        self.expiry=QTimer(self);self.expiry.setSingleShot(True);self.expiry.timeout.connect(self.expired);self.expiry.start(600_000)
+    def expired(self):
+        if self.completed:return
+        self.qr.clear();self.qr.hide();self.output.clear();self.output.hide();self.manual.hide();self.confirmation.hide();self.code.clear();self.code.setEnabled(False);self.finish.setEnabled(False);self.first.show();self.begin.show()
+        self.instructions.setText('QR kedaluwarsa · Buat QR baru\nBuat ulang QR, lalu scan QR terbaru di Google Authenticator. Gunakan kode dari entri yang baru dibuat.')
+    def clear_sensitive(self):
+        self.qr.clear();self.output.clear()
+        for field in (self.activation,self.current,self.code,self.next,self.confirm):field.clear()
+        if hasattr(self,'expiry'):self.expiry.stop()
+    def reject(self):
+        if not self.busy:self.clear_sensitive();super().reject()
     def confirm_setup(self):
-        if self.next.text()!=self.confirm.text():notice(self,'Password baru belum cocok.');return
-        data=dict(current=self.current.text(),next=self.next.text(),code=self.code.text().strip(),activation=self.activation.text().strip());self.current.clear();self.next.clear();self.confirm.clear();self.code.clear()
+        if not re.fullmatch(r'[0-9]{6}',self.code.text().strip()):self.status.setText('Masukkan kode 6 digit dari aplikasi authenticator di HP.');self.code.setFocus();return
+        if not 15<=len(self.next.text())<=128 or len(self.next.text().encode('utf-8'))>512:self.status.setText('Password baru harus 15–128 karakter.');self.next.setFocus();return
+        if self.next.text()==self.current.text():self.status.setText('Gunakan password baru yang berbeda dari password saat ini.');self.next.setFocus();return
+        if self.next.text()!=self.confirm.text():self.status.setText('Ulangi password baru dengan nilai yang sama.');self.confirm.setFocus();return
+        data=dict(current=self.current.text(),next=self.next.text(),code=self.code.text().strip(),activation=self.activation.text().strip());self.code.clear()
         def done(result):
             self.completed=True;self.client.token='';self.client.user=None
-            self.activation.clear()
+            self.activation.clear();self.current.clear();self.next.clear();self.confirm.clear()
+            self.expiry.stop();self.qr.clear();self.qr.hide();self.manual.hide();self.output.show()
+            self.instructions.setText('Autentikator aktif · Simpan kode pemulihan\nSetiap kode pemulihan dapat dipakai sekali. Login berikutnya memakai password baru dan kode autentikator dari HP.')
+            self.confirmation.hide()
             self.output.setPlainText('Simpan kode pemulihan ini di tempat pribadi yang aman. Masing-masing sekali pakai.\n\n'+'\n'.join(result['recoveryCodes'])+'\n\nSetup selesai. Login dengan password baru dan tunggu kode autentikator berikutnya (maksimal 30 detik).')
             self.begin.setEnabled(False);self.finish.setEnabled(False)
             close=QPushButton('Sudah disimpan · kembali ke login');close.clicked.connect(self.accept);self.layout.addWidget(close)
