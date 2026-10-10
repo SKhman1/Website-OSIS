@@ -35,6 +35,27 @@ assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href')
 c.identity.favicon='/api/media/22222222-2222-4222-8222-222222222222.webp';p.render(c);
 assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href'),c.identity.favicon);
 c.identity.favicon=null;p.render(c);assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href'),c.identity.logo);
+// Exercise crop/stretch with decoded pixels, deduplication and stale image loads.
+const create=p.document.createElement.bind(p.document),icons=[],draws=[];
+const pixels=new Uint8ClampedArray(4*6*4);
+for(let y=1;y<5;y++)for(let x=1;x<3;x++)pixels[(y*4+x)*4+3]=255;
+p.document.createElement=(tag,...args)=>{
+  const node=create(tag,...args);
+  if(tag==='img'){Object.defineProperties(node,{naturalWidth:{value:4},naturalHeight:{value:6}});icons.push(node);}
+  if(tag==='canvas'){node.getContext=()=>({drawImage:(...args)=>draws.push(args),getImageData:()=>({data:pixels})});node.toDataURL=()=>'data:image/png;base64,QA';}
+  return node;
+};
+const iconContent=structuredClone(c);iconContent.identity.favicon='/api/media/33333333-3333-4333-8333-333333333333.webp';p.render(iconContent);
+const stale=icons.find(icon=>icon.onload);
+iconContent.identity.favicon='/api/media/44444444-4444-4444-8444-444444444444.webp';p.render(iconContent);
+stale.onload();assert.equal(draws.length,0);
+const current=icons.filter(icon=>icon.onload).at(-1);current.onload();
+assert.deepEqual(draws.at(-1).slice(1),[1,1,2,4,0,0,256,256]);
+assert.equal(p.document.querySelector('[data-cms-favicon]').getAttribute('href'),'data:image/png;base64,QA');
+assert.equal(p.document.querySelector('[data-cms-favicon]').type,'image/png');
+p.render(iconContent);assert.equal(icons.filter(icon=>icon.onload).length,2);
+p.document.createElement=create;p.render(c);
+console.log('PASS favicon crops transparent margins, stretches to square, ignores stale loads and reuses unchanged icons');
 assert.ok(p.document.querySelector('.brand-logo-custom'));
 assert.equal(p.document.querySelector('[data-cms-stat="members"] [data-counter]').dataset.value,'0');
 assert.equal(p.document.querySelector('[data-cms-stat="members"] .preview-badge').hidden,true);

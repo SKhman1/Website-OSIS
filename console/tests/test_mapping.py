@@ -45,10 +45,10 @@ class MappingTests(unittest.TestCase):
             dialog.area.setText('A1:E7');dialog.load_area();self.assertEqual(dialog.first.value(),6);dialog.finish();self.assertEqual(len(dialog.output[0]['rundown']),2);dialog.close()
             editor=Editor('settings',dict(cabinetName='Cabinet',term='2026/2027',logo='/images/brand/cabinet-default.webp',logoAlt='Logo'),lambda *args:None)
             self.assertIsNone(editor.value()['favicon']);editor.fields['favicon'][0].setText('/api/media/22222222-2222-4222-8222-222222222222.webp');self.assertTrue(editor.value()['favicon'].endswith('.webp'));editor.close()
-    def test_favicon_square_transparent_padding_and_no_metadata(self):
+    def test_favicon_stretches_visible_logo_without_padding_or_metadata(self):
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'logo.png';image=Image.new('RGBA',(400,800));image.paste((255,159,67,255),(50,200,350,600));image.save(path)
             with Image.open(io.BytesIO(prepare_favicon(path))) as icon:
-                self.assertEqual(icon.size,(256,256));self.assertEqual(icon.getpixel((0,0))[3],0);self.assertNotIn('exif',icon.info)
+                self.assertEqual(icon.size,(256,256));self.assertEqual(icon.convert('RGBA').getchannel('A').getbbox(),(0,0,256,256));self.assertNotIn('exif',icon.info)
 
 if __name__=='__main__':unittest.main()

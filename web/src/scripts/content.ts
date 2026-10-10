@@ -48,9 +48,33 @@ function photoUpdate(root: Element, source: string, alt: string, placeholder: bo
   const img=root.querySelector<HTMLImageElement>('img');if(img){img.removeAttribute('srcset');img.removeAttribute('sizes');img.src=source;img.alt=alt;}
   const caption=root.querySelector<HTMLElement>('figcaption');if(caption)caption.hidden=!placeholder;
 }
+function faviconUpdate(link: HTMLLinkElement, source: string) {
+  if(link.dataset.faviconSource===source)return;
+  link.dataset.faviconSource=source;link.href=source;link.removeAttribute('type');link.removeAttribute('sizes');
+  const icon=el('img');
+  icon.onload=()=>{
+    if(link.dataset.faviconSource!==source)return;
+    try {
+      const width=icon.naturalWidth,height=icon.naturalHeight;
+      const canvas=el('canvas');canvas.width=width;canvas.height=height;
+      const context=canvas.getContext('2d',{willReadFrequently:true});if(!context)return;
+      context.drawImage(icon,0,0);
+      const pixels=context.getImageData(0,0,width,height).data;
+      let left=width,top=height,right=-1,bottom=-1;
+      for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y*width+x)*4+3]){
+        left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);
+      }
+      if(right<left)return;
+      canvas.width=canvas.height=256;
+      context.drawImage(icon,left,top,right-left+1,bottom-top+1,0,0,256,256);
+      link.href=canvas.toDataURL('image/png');link.type='image/png';link.sizes.value='256x256';
+    } catch { /* Keep the original icon if decoding/canvas is unavailable. */ }
+  };
+  icon.src=source;
+}
 export function renderContent(content: CmsContent) {
   const {cabinetName,term,logo,logoAlt}=content.identity;
-  document.querySelectorAll<HTMLLinkElement>('[data-cms-favicon]').forEach(link=>{const source=content.identity.favicon??logo;if(link.getAttribute('href')!==source)link.href=source;});
+  document.querySelectorAll<HTMLLinkElement>('[data-cms-favicon]').forEach(link=>faviconUpdate(link,content.identity.favicon??logo));
   document.querySelectorAll('[data-cms-cabinet]').forEach(node=>node.textContent=cabinetName);
   document.querySelectorAll<HTMLElement>('[data-cms-term]').forEach(node=>node.textContent=`${node.dataset.cmsTerm}${term}`);
   document.querySelectorAll('[data-cms-cabinet-term]').forEach(node=>node.textContent=`${cabinetName} · ${term}`);

@@ -226,12 +226,12 @@ def prepare_photo(path):
     return data
 
 def prepare_favicon(path):
-    """Reuse image limits, strip metadata and fit a transparent 256px square."""
+    """Reuse image limits, strip transparent margins and stretch to 256px square."""
     data=prepare_photo(path)
     with Image.open(io.BytesIO(data)) as source:
         image=source.convert("RGBA");box=image.getchannel("A").getbbox()
         if box:image=image.crop(box)
         else:raise ValueError("Ikon tidak boleh sepenuhnya transparan.")
-        image=ImageOps.contain(image,(256,256),Image.Resampling.LANCZOS);canvas=Image.new("RGBA",(256,256));canvas.alpha_composite(image,((256-image.width)//2,(256-image.height)//2))
-        output=io.BytesIO();canvas.save(output,format="WEBP",quality=90,method=4)
+        image=image.resize((256,256),Image.Resampling.LANCZOS)
+        output=io.BytesIO();image.save(output,format="WEBP",quality=90,method=4)
     return output.getvalue()
